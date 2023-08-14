@@ -23,8 +23,8 @@ import java.io.OutputStream;
 import java.util.List;
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver;
 import org.apache.beam.sdk.values.TypeDescriptor;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Optional;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Optional;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -35,9 +35,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * @param <T> the type of the values being transcoded
  */
-@SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
-})
 public class NullableCoder<T> extends StructuredCoder<@Nullable T> {
   public static <T> NullableCoder<T> of(Coder<T> valueCoder) {
     if (valueCoder instanceof NullableCoder) {
@@ -78,7 +75,7 @@ public class NullableCoder<T> extends StructuredCoder<@Nullable T> {
   }
 
   @Override
-  public T decode(InputStream inStream) throws IOException, CoderException {
+  public @Nullable T decode(InputStream inStream) throws IOException, CoderException {
     return decode(inStream, Context.NESTED);
   }
 
@@ -184,7 +181,7 @@ public class NullableCoder<T> extends StructuredCoder<@Nullable T> {
   }
 
   @Override
-  public TypeDescriptor<T> getEncodedTypeDescriptor() {
-    return valueCoder.getEncodedTypeDescriptor();
+  public TypeDescriptor<@Nullable T> getEncodedTypeDescriptor() {
+    return (TypeDescriptor<@Nullable T>) valueCoder.getEncodedTypeDescriptor();
   }
 }

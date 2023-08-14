@@ -17,7 +17,7 @@
  */
 package org.apache.beam.runners.core.metrics;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.Closeable;
@@ -25,14 +25,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.MoreObjects;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** Tracks the current state of a single execution thread. */
 @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC", justification = "Intentional for performance.")
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class ExecutionStateTracker implements Comparable<ExecutionStateTracker> {
 
@@ -45,6 +46,8 @@ public class ExecutionStateTracker implements Comparable<ExecutionStateTracker> 
       new ConcurrentHashMap<>();
 
   private static final long LULL_REPORT_MS = TimeUnit.MINUTES.toMillis(5);
+  private static final AtomicIntegerFieldUpdater<ExecutionStateTracker> SAMPLING_UPDATER =
+      AtomicIntegerFieldUpdater.newUpdater(ExecutionStateTracker.class, "sampling");
 
   public static final String START_STATE_NAME = "start";
   public static final String PROCESS_STATE_NAME = "process";
@@ -116,6 +119,9 @@ public class ExecutionStateTracker implements Comparable<ExecutionStateTracker> 
    * reporting threads, thus it being marked volatile.
    */
   private volatile @Nullable ExecutionState currentState;
+
+  @SuppressWarnings("UnusedVariable")
+  private volatile int sampling = 0;
 
   /**
    * The current number of times that this {@link ExecutionStateTracker} has transitioned state.
@@ -218,7 +224,7 @@ public class ExecutionStateTracker implements Comparable<ExecutionStateTracker> 
     ExecutionStateTracker other = CURRENT_TRACKERS.put(thread.getId(), this);
     checkState(
         other == null,
-        "Execution state of thread {} was already being tracked by {}",
+        "Execution state of thread %s was already being tracked by %s",
         thread.getId(),
         other);
 
@@ -298,7 +304,17 @@ public class ExecutionStateTracker implements Comparable<ExecutionStateTracker> 
     return nextLullReportMs;
   }
 
-  protected void takeSample(long millisSinceLastSample) {
+  void takeSample(long millisSinceLastSample) {
+    if (SAMPLING_UPDATER.compareAndSet(this, 0, 1)) {
+      try {
+        takeSampleOnce(millisSinceLastSample);
+      } finally {
+        SAMPLING_UPDATER.set(this, 0);
+      }
+    }
+  }
+
+  protected void takeSampleOnce(long millisSinceLastSample) {
     // These variables are read by Sampler thread, and written by Execution and Progress Reporting
     // threads.
     // Because there is no read/modify/write cycle in the Sampler thread, making them volatile

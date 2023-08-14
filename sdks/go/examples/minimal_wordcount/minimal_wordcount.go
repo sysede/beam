@@ -27,10 +27,10 @@
 //
 // Concepts:
 //
-//   1. Reading data from text files
-//   2. Specifying 'inline' transforms
-//   3. Counting items in a PCollection
-//   4. Writing data to text files
+//  1. Reading data from text files
+//  2. Specifying 'inline' transforms
+//  3. Counting items in a PCollection
+//  4. Writing data to text files
 //
 // No arguments are required to run this pipeline. It will be executed with
 // the direct runner. You can see the results in the output file named
@@ -43,12 +43,17 @@ package main
 //     by William Shakespeare.
 //   multifile: false
 //   default_example: true
-//   context_line: 69
+//   context_line: 74
 //   categories:
 //     - IO
 //     - Combiners
 //     - Core Transforms
 //     - Quickstart
+//   complexity: BASIC
+//   tags:
+//     - count
+//     - io
+//     - strings
 
 import (
 	"context"
@@ -57,7 +62,7 @@ import (
 
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/io/textio"
-	"github.com/apache/beam/sdks/v2/go/pkg/beam/runners/direct"
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/runners/prism"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/transforms/stats"
 
 	_ "github.com/apache/beam/sdks/v2/go/pkg/beam/io/filesystem/gcs"
@@ -79,7 +84,7 @@ func main() {
 	// Concept #1: Invoke a root transform with the pipeline; in this case,
 	// textio.Read to read a set of input text file. textio.Read returns a
 	// PCollection where each element is one line from the input text
-	// (one of of Shakespeare's texts).
+	// (one of Shakespeare's texts).
 
 	// This example reads from a public dataset containing the text
 	// of King Lear.
@@ -114,6 +119,6 @@ func main() {
 	// formatted strings) to a text file.
 	textio.Write(s, "wordcounts.txt", formatted)
 
-	// Run the pipeline on the direct runner.
-	direct.Execute(context.Background(), p)
+	// Run the pipeline on the prism runner.
+	prism.Execute(context.Background(), p)
 }

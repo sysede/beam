@@ -23,7 +23,7 @@ import com.google.api.services.bigquery.model.*
 import com.google.common.collect.ImmutableList
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.beam.sdk.Pipeline
-import org.apache.beam.sdk.coders.AvroCoder
+import org.apache.beam.sdk.extensions.avro.coders.AvroCoder
 import org.apache.beam.sdk.coders.DefaultCoder
 import org.apache.beam.sdk.coders.DoubleCoder
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
@@ -269,8 +269,8 @@ object Snippets {
                     BigQueryIO.write<WeatherData>()
                             .to(
                                     object : DynamicDestinations<WeatherData, Long>() {
-                                        override fun getDestination(elem: ValueInSingleWindow<WeatherData>): Long? {
-                                            return elem.value!!.year
+                                        override fun getDestination(elem: ValueInSingleWindow<WeatherData>?): Long {
+                                            return elem!!.value!!.year
                                         }
 
                                         override fun getTable(destination: Long?): TableDestination {

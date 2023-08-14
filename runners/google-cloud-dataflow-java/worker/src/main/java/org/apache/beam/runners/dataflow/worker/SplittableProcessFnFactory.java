@@ -22,7 +22,7 @@ import static org.apache.beam.runners.dataflow.util.CloudObjects.coderFromCloudO
 import static org.apache.beam.runners.dataflow.util.Structs.getBytes;
 import static org.apache.beam.runners.dataflow.util.Structs.getObject;
 import static org.apache.beam.sdk.util.SerializableUtils.deserializeFromByteArray;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.List;
@@ -64,7 +64,7 @@ import org.joda.time.Instant;
  * specifications from the Dataflow service.
  */
 @SuppressWarnings({
-  "rawtypes" // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes" // TODO(https://github.com/apache/beam/issues/20447)
 })
 class SplittableProcessFnFactory {
   static final ParDoFnFactory createDefault() {

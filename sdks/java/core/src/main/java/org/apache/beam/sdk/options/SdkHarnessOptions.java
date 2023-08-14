@@ -17,23 +17,25 @@
  */
 package org.apache.beam.sdk.options;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.beam.sdk.annotations.Experimental;
-import org.apache.beam.sdk.annotations.Experimental.Kind;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import org.apache.beam.sdk.util.InstanceBuilder;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 import org.checkerframework.checker.index.qual.NonNegative;
 
 /** Options that are used to control configuration of the SDK harness. */
-@Experimental(Kind.PORTABILITY)
 @Description("Options that are used to control configuration of the SDK harness.")
-public interface SdkHarnessOptions extends PipelineOptions {
+public interface SdkHarnessOptions extends PipelineOptions, MemoryMonitorOptions {
   /** The set of log levels that can be used in the SDK harness. */
   enum LogLevel {
     /** Special level used to turn off logging. */
@@ -52,7 +54,18 @@ public interface SdkHarnessOptions extends PipelineOptions {
     DEBUG,
 
     /** LogLevel for logging tracing messages. */
-    TRACE
+    TRACE;
+
+    /** Map from LogLevel enums to java logging level. */
+    public static final ImmutableMap<LogLevel, Level> LEVEL_CONFIGURATION =
+        ImmutableMap.<SdkHarnessOptions.LogLevel, Level>builder()
+            .put(OFF, Level.OFF)
+            .put(ERROR, Level.SEVERE)
+            .put(WARN, Level.WARNING)
+            .put(INFO, Level.INFO)
+            .put(DEBUG, Level.FINE)
+            .put(TRACE, Level.FINEST)
+            .build();
   }
 
   /** This option controls the default log level of all loggers without a log level override. */
@@ -86,15 +99,37 @@ public interface SdkHarnessOptions extends PipelineOptions {
 
   void setSdkHarnessLogLevelOverrides(SdkHarnessLogLevelOverrides value);
 
+  /** Whether to include SLF4J MDC in log entries. */
+  @Description(
+      "This option controls whether SLF4J MDC keys and values will be appended to log entries. "
+          + "This used by Beam to add structured data to log entries, such as quota events and "
+          + "return statuses.")
+  @Default.Boolean(true)
+  boolean getLogMdc();
+
+  void setLogMdc(boolean value);
+
   /**
-   * Size (in MB) of each grouping table used to pre-combine elements. If unset, defaults to 100 MB.
+   * Size (in MB) of each grouping table used to pre-combine elements. Larger values may reduce the
+   * amount of data shuffled. If unset, defaults to 100 MB.
    *
    * <p>CAUTION: If set too large, workers may run into OOM conditions more easily, each worker may
    * have many grouping tables in-memory concurrently.
+   *
+   * <p>CAUTION: This option does not apply to portable runners such as Dataflow Prime. See {@link
+   * #setMaxCacheMemoryUsageMb}, {@link #setMaxCacheMemoryUsagePercent}, or {@link
+   * #setMaxCacheMemoryUsageMbClass} to configure memory thresholds that apply to the grouping table
+   * and other cached objects.
    */
   @Description(
-      "The size (in MB) of the grouping tables used to pre-combine elements before "
-          + "shuffling.  Larger values may reduce the amount of data shuffled.")
+      "The size (in MB) of the grouping tables used to pre-combine elements before shuffling. If "
+          + "unset, defaults to 100 MB. Larger values may reduce the amount of data shuffled. "
+          + "CAUTION: If set too large, workers may run into OOM conditions more easily, each "
+          + "worker may have many grouping tables in-memory concurrently. CAUTION: This option "
+          + "does not apply to portable runners such as Dataflow Prime. See "
+          + "--maxCacheMemoryUsageMb, --maxCacheMemoryUsagePercent, or "
+          + "--maxCacheMemoryUsageMbClass to configure memory thresholds that apply to the "
+          + "grouping table and other cached objects.")
   @Default.Integer(100)
   int getGroupingTableMaxSizeMb();
 
@@ -278,18 +313,24 @@ public interface SdkHarnessOptions extends PipelineOptions {
      * name}, or fully qualified Java {@link Package#getName() package name}, or custom logger name.
      * The {@code LogLevel} represents the log level and must be one of {@link LogLevel}.
      */
-    @JsonCreator
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static SdkHarnessLogLevelOverrides from(Map<String, String> values) {
       checkNotNull(values, "Expected values to be not null.");
       SdkHarnessLogLevelOverrides overrides = new SdkHarnessLogLevelOverrides();
       for (Map.Entry<String, String> entry : values.entrySet()) {
+        String module = entry.getKey();
+        String level = entry.getValue();
+        if (level.equals("WARNING")) {
+          // alias: "WARNING" -> "WARN"
+          level = "WARN";
+        }
         try {
-          overrides.addOverrideForName(entry.getKey(), LogLevel.valueOf(entry.getValue()));
+          overrides.addOverrideForName(module, LogLevel.valueOf(level));
         } catch (IllegalArgumentException e) {
           throw new IllegalArgumentException(
               String.format(
                   "Unsupported log level '%s' requested for %s. Must be one of %s.",
-                  entry.getValue(), entry.getKey(), Arrays.toString(LogLevel.values())));
+                  level, module, Arrays.toString(LogLevel.values())));
         }
       }
       return overrides;
@@ -313,4 +354,36 @@ public interface SdkHarnessOptions extends PipelineOptions {
   List<String> getJdkAddOpenModules();
 
   void setJdkAddOpenModules(List<String> options);
+
+  /**
+   * Configure log manager's default log level and log level overrides from the sdk harness options,
+   * and return the list of configured loggers.
+   */
+  static List<Logger> getConfiguredLoggerFromOptions(SdkHarnessOptions loggingOptions) {
+    ArrayList<Logger> configuredLoggers = new ArrayList<>();
+    LogManager logManager = LogManager.getLogManager();
+    Logger rootLogger = logManager.getLogger("");
+
+    // Use the passed in logging options to configure the various logger levels.
+    if (loggingOptions.getDefaultSdkHarnessLogLevel() != null) {
+      rootLogger.setLevel(
+          SdkHarnessOptions.LogLevel.LEVEL_CONFIGURATION.get(
+              loggingOptions.getDefaultSdkHarnessLogLevel()));
+    }
+
+    if (loggingOptions.getSdkHarnessLogLevelOverrides() != null) {
+      for (Map.Entry<String, SdkHarnessOptions.LogLevel> loggerOverride :
+          loggingOptions.getSdkHarnessLogLevelOverrides().entrySet()) {
+        Logger logger = logManager.getLogger(loggerOverride.getKey());
+        if (logger == null) {
+          // create a logger if not exist
+          logger = Logger.getLogger(loggerOverride.getKey());
+        }
+        logger.setLevel(
+            SdkHarnessOptions.LogLevel.LEVEL_CONFIGURATION.get(loggerOverride.getValue()));
+        configuredLoggers.add(logger);
+      }
+    }
+    return configuredLoggers;
+  }
 }

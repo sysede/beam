@@ -19,7 +19,7 @@ package org.apache.beam.sdk.util;
 
 import static org.apache.beam.sdk.util.CoderUtils.decodeFromByteArray;
 import static org.apache.beam.sdk.util.CoderUtils.encodeToByteArray;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,7 +39,7 @@ import org.xerial.snappy.SnappyOutputStream;
 
 /** Utilities for working with Serializables. */
 @SuppressWarnings({
-  "nullness", // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness", // TODO(https://github.com/apache/beam/issues/20497)
   "rawtypes"
 })
 public class SerializableUtils {

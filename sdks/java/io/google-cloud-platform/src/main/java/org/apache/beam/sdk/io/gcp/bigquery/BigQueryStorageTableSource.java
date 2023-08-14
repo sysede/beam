@@ -17,8 +17,8 @@
  */
 package org.apache.beam.sdk.io.gcp.bigquery;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import com.google.api.services.bigquery.model.Table;
 import com.google.api.services.bigquery.model.TableReference;
@@ -28,19 +28,17 @@ import java.io.ObjectInputStream;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.beam.sdk.coders.Coder;
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryServices.DatasetService;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Strings;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Strings;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** A {@link org.apache.beam.sdk.io.Source} representing reading from a table. */
-@SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
-})
 public class BigQueryStorageTableSource<T> extends BigQueryStorageSourceBase<T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(BigQueryStorageTableSource.class);
@@ -48,7 +46,7 @@ public class BigQueryStorageTableSource<T> extends BigQueryStorageSourceBase<T> 
   private final ValueProvider<TableReference> tableReferenceProvider;
   private final boolean projectionPushdownApplied;
 
-  private transient AtomicReference<Table> cachedTable;
+  private transient AtomicReference<@Nullable Table> cachedTable;
 
   public static <T> BigQueryStorageTableSource<T> create(
       ValueProvider<TableReference> tableRefProvider,
@@ -90,7 +88,7 @@ public class BigQueryStorageTableSource<T> extends BigQueryStorageSourceBase<T> 
 
   private BigQueryStorageTableSource(
       ValueProvider<TableReference> tableRefProvider,
-      DataFormat format,
+      @Nullable DataFormat format,
       @Nullable ValueProvider<List<String>> selectedFields,
       @Nullable ValueProvider<String> rowRestriction,
       SerializableFunction<SchemaAndRecord, T> parseFn,
@@ -164,8 +162,11 @@ public class BigQueryStorageTableSource<T> extends BigQueryStorageSourceBase<T> 
   }
 
   @Override
-  protected @Nullable Table getTargetTable(BigQueryOptions options) throws Exception {
-    if (cachedTable.get() == null) {
+  protected Table getTargetTable(BigQueryOptions options) throws Exception {
+    Table maybeTable = cachedTable.get();
+    if (maybeTable != null) {
+      return maybeTable;
+    } else {
       TableReference tableReference = tableReferenceProvider.get();
       if (Strings.isNullOrEmpty(tableReference.getProjectId())) {
         checkState(
@@ -183,10 +184,14 @@ public class BigQueryStorageTableSource<T> extends BigQueryStorageSourceBase<T> 
                 ? options.getProject()
                 : options.getBigQueryProject());
       }
-      Table table = bqServices.getDatasetService(options).getTable(tableReference);
-      cachedTable.compareAndSet(null, table);
+      try (DatasetService datasetService = bqServices.getDatasetService(options)) {
+        Table table = datasetService.getTable(tableReference);
+        if (table == null) {
+          throw new IllegalArgumentException("Table not found" + table);
+        }
+        cachedTable.compareAndSet(null, table);
+        return table;
+      }
     }
-
-    return cachedTable.get();
   }
 }

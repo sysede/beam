@@ -17,7 +17,7 @@
  */
 package org.apache.beam.runners.dataflow;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
@@ -75,15 +75,15 @@ import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.sdk.values.WindowingStrategy;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Function;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Optional;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ArrayListMultimap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ForwardingMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Maps;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Multimap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Function;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.MoreObjects;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Optional;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ArrayListMultimap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ForwardingMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Maps;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Multimap;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 
@@ -91,7 +91,7 @@ import org.joda.time.Instant;
  * Dataflow batch overrides for {@link CreatePCollectionView}, specialized for different view types.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 class BatchViewOverrides {
   /**
@@ -119,8 +119,8 @@ class BatchViewOverrides {
    * </ul>
    *
    * <p>The {@code [META, Window, 0]} record stores the number of unique keys per window, while
-   * {@code [META, Window, i]} for {@code i} in {@code [1, size of map]} stores a the users key.
-   * This allows for one to access the size of the map by looking at {@code [META, Window, 0]} and
+   * {@code [META, Window, i]} for {@code i} in {@code [1, size of map]} stores the users key. This
+   * allows for one to access the size of the map by looking at {@code [META, Window, 0]} and
    * iterate over all the keys by accessing {@code [META, Window, i]} for {@code i} in {@code [1,
    * size of map]}.
    *
@@ -180,6 +180,7 @@ class BatchViewOverrides {
               "Multiple values [%s, %s] found for single key [%s] within window [%s].",
               map.get(kv.getValue().getValue().getKey()),
               kv.getValue().getValue().getValue(),
+              kv.getValue().getValue().getKey(),
               kv.getKey());
           map.put(
               kv.getValue().getValue().getKey(),
@@ -238,7 +239,7 @@ class BatchViewOverrides {
       Coder<W> windowCoder = (Coder<W>) input.getWindowingStrategy().getWindowFn().windowCoder();
 
       @SuppressWarnings({
-        "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+        "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
         "unchecked"
       })
       KvCoder<K, V> inputCoder = (KvCoder) input.getCoder();
@@ -284,8 +285,8 @@ class BatchViewOverrides {
    * </ul>
    *
    * <p>The {@code [META, Window, 0]} record stores the number of unique keys per window, while
-   * {@code [META, Window, i]} for {@code i} in {@code [1, size of map]} stores a the users key.
-   * This allows for one to access the size of the map by looking at {@code [META, Window, 0]} and
+   * {@code [META, Window, i]} for {@code i} in {@code [1, size of map]} stores the users key. This
+   * allows for one to access the size of the map by looking at {@code [META, Window, 0]} and
    * iterate over all the keys by accessing {@code [META, Window, i]} for {@code i} in {@code [1,
    * size of map]}.
    *
@@ -723,7 +724,7 @@ class BatchViewOverrides {
       Coder<W> windowCoder = (Coder<W>) input.getWindowingStrategy().getWindowFn().windowCoder();
 
       @SuppressWarnings({
-        "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+        "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
         "unchecked"
       })
       KvCoder<K, V> inputCoder = (KvCoder) input.getCoder();
@@ -755,7 +756,7 @@ class BatchViewOverrides {
       Coder<W> windowCoder = (Coder<W>) input.getWindowingStrategy().getWindowFn().windowCoder();
 
       @SuppressWarnings({
-        "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+        "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
         "unchecked"
       })
       KvCoder<K, V> inputCoder = (KvCoder) input.getCoder();

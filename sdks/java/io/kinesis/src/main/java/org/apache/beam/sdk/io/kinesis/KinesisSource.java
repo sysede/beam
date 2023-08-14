@@ -17,8 +17,8 @@
  */
 package org.apache.beam.sdk.io.kinesis;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists.newArrayList;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists.newArrayList;
 
 import java.util.List;
 import org.apache.beam.sdk.coders.Coder;
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 /** Represents source for single stream in Kinesis. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 class KinesisSource extends UnboundedSource<KinesisRecord, KinesisReaderCheckpoint> {
 

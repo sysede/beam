@@ -64,11 +64,11 @@ import org.apache.beam.sdk.values.TimestampedValue;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.WindowingStrategy;
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Equivalence;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.FluentIterable;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Equivalence;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.FluentIterable;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSet;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
@@ -84,7 +84,7 @@ import org.joda.time.Instant;
  * @param <W> The type of windows being used.
  */
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
 })
 public class ReduceFnTester<InputT, OutputT, W extends BoundedWindow> {
   private static final String KEY = "TEST_KEY";
@@ -360,8 +360,8 @@ public class ReduceFnTester<InputT, OutputT, W extends BoundedWindow> {
   }
 
   /**
-   * Verifies that the the set of windows that have any state stored is exactly {@code
-   * expectedWindows} and that each of these windows has only tags from {@code allowedTags}.
+   * Verifies that the set of windows that have any state stored is exactly {@code expectedWindows}
+   * and that each of these windows has only tags from {@code allowedTags}.
    */
   private void assertHasOnlyGlobalAndAllowedTags(
       Set<W> expectedWindows, Set<StateTag<?>> allowedTags) {

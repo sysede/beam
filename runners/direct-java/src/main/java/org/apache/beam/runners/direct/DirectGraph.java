@@ -28,13 +28,13 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.PInput;
 import org.apache.beam.sdk.values.PValue;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ListMultimap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ListMultimap;
 
 /**
  * Methods for interacting with the underlying structure of a {@link Pipeline} that is being
  * executed with the {@link DirectRunner}.
  */
-@SuppressWarnings({"keyfor", "nullness"}) // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+@SuppressWarnings({"keyfor", "nullness"}) // TODO(https://github.com/apache/beam/issues/20497)
 class DirectGraph implements ExecutableGraph<AppliedPTransform<?, ?, ?>, PValue> {
   private final Map<PCollection<?>, AppliedPTransform<?, ?, ?>> producers;
   private final Map<PCollectionView<?>, AppliedPTransform<?, ?, ?>> viewWriters;

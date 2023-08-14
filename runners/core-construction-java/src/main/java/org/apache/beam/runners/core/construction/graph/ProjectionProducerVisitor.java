@@ -25,7 +25,7 @@ import org.apache.beam.sdk.schemas.FieldAccessDescriptor;
 import org.apache.beam.sdk.schemas.ProjectionProducer;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 
 /** A {@link PipelineVisitor} to discover projection pushdown opportunities. */
 class ProjectionProducerVisitor extends PipelineVisitor.Defaults {
@@ -57,7 +57,7 @@ class ProjectionProducerVisitor extends PipelineVisitor.Defaults {
   public CompositeBehavior enterCompositeTransform(Node node) {
     PTransform<?, ?> transform = node.getTransform();
 
-    // TODO(BEAM-13658) Support inputs other than PBegin.
+    // TODO(https://github.com/apache/beam/issues/21359) Support inputs other than PBegin.
     if (!node.getInputs().isEmpty()) {
       return CompositeBehavior.DO_NOT_ENTER_TRANSFORM;
     }

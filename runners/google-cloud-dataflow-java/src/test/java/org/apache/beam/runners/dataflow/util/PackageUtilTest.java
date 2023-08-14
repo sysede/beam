@@ -68,7 +68,6 @@ import org.apache.beam.runners.core.construction.Environments;
 import org.apache.beam.runners.dataflow.util.PackageUtil.PackageAttributes;
 import org.apache.beam.runners.dataflow.util.PackageUtil.StagedFile;
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions;
-import org.apache.beam.sdk.extensions.gcp.util.FastNanoClockAndSleeper;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil.StorageObjectOrIOException;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
@@ -79,16 +78,17 @@ import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.ExpectedLogs;
 import org.apache.beam.sdk.testing.RegexMatcher;
+import org.apache.beam.sdk.util.FastNanoClockAndSleeper;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.sdk.util.ZipFiles;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.HashCode;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.LineReader;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.MoreExecutors;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.HashCode;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.Files;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.LineReader;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.util.concurrent.MoreExecutors;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -131,7 +131,7 @@ public class PackageUtilTest {
 
   private File makeFileWithContents(String name, String contents) throws Exception {
     File tmpFile = tmpFolder.newFile(name);
-    Files.write(contents, tmpFile, StandardCharsets.UTF_8);
+    Files.asCharSink(tmpFile, StandardCharsets.UTF_8).write(contents);
     assertTrue(tmpFile.setLastModified(0)); // required for determinism with directories
     return tmpFile;
   }
@@ -413,10 +413,10 @@ public class PackageUtilTest {
       directPackageUtil.stageClasspathElements(
           ImmutableList.of(makeStagedFile(tmpFile.getAbsolutePath())),
           STAGING_PATH,
-          fastNanoClockAndSleeper,
+          fastNanoClockAndSleeper::sleep,
           createOptions);
     } finally {
-      verify(mockGcsUtil).getObjects(anyListOf(GcsPath.class));
+      verify(mockGcsUtil, times(5)).getObjects(anyListOf(GcsPath.class));
       verify(mockGcsUtil, times(5)).create(any(GcsPath.class), any(GcsUtil.CreateOptions.class));
       verifyNoMoreInteractions(mockGcsUtil);
     }
@@ -441,7 +441,7 @@ public class PackageUtilTest {
       directPackageUtil.stageClasspathElements(
           ImmutableList.of(makeStagedFile(tmpFile.getAbsolutePath())),
           STAGING_PATH,
-          fastNanoClockAndSleeper,
+          fastNanoClockAndSleeper::sleep,
           createOptions);
       fail("Expected RuntimeException");
     } catch (RuntimeException e) {
@@ -477,18 +477,20 @@ public class PackageUtilTest {
                 StorageObjectOrIOException.create(new FileNotFoundException("some/path"))));
     when(mockGcsUtil.create(any(GcsPath.class), any(GcsUtil.CreateOptions.class)))
         .thenThrow(new IOException("Fake Exception: 410 Gone")) // First attempt fails
-        .thenReturn(pipe.sink()); // second attempt succeeds
+        .thenThrow(
+            new IOException("Fake Exception: 412 Precondition Failed")) // Second attempt fails
+        .thenReturn(pipe.sink()); // Third attempt succeeds
 
     try (PackageUtil directPackageUtil =
         PackageUtil.withExecutorService(MoreExecutors.newDirectExecutorService())) {
       directPackageUtil.stageClasspathElements(
           ImmutableList.of(makeStagedFile(tmpFile.getAbsolutePath())),
           STAGING_PATH,
-          fastNanoClockAndSleeper,
+          fastNanoClockAndSleeper::sleep,
           createOptions);
     } finally {
-      verify(mockGcsUtil).getObjects(anyListOf(GcsPath.class));
-      verify(mockGcsUtil, times(2)).create(any(GcsPath.class), any(GcsUtil.CreateOptions.class));
+      verify(mockGcsUtil, times(3)).getObjects(anyListOf(GcsPath.class));
+      verify(mockGcsUtil, times(3)).create(any(GcsPath.class), any(GcsUtil.CreateOptions.class));
       verifyNoMoreInteractions(mockGcsUtil);
     }
   }

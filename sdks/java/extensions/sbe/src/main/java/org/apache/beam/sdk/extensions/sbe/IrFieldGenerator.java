@@ -19,20 +19,17 @@ package org.apache.beam.sdk.extensions.sbe;
 
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Iterator;
 import java.util.List;
-import org.apache.beam.sdk.annotations.Experimental;
-import org.apache.beam.sdk.annotations.Experimental.Kind;
 import org.apache.beam.sdk.extensions.sbe.SbeSchema.IrOptions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
 import uk.co.real_logic.sbe.ir.Encoding.Presence;
 import uk.co.real_logic.sbe.ir.Ir;
 import uk.co.real_logic.sbe.ir.Token;
 
 /** Utility for generating {@link SbeField}s from an {@link Ir}. */
-@Experimental(Kind.SCHEMAS)
 final class IrFieldGenerator {
   private IrFieldGenerator() {}
 
@@ -54,7 +51,7 @@ final class IrFieldGenerator {
           fields.add(processPrimitive(iterator));
           break;
         default:
-          // TODO(BEAM-12697): Support remaining field types
+          // TODO(https://github.com/apache/beam/issues/21102): Support remaining field types
           break;
       }
     }

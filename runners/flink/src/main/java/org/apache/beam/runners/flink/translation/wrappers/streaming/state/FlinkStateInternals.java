@@ -42,6 +42,7 @@ import org.apache.beam.sdk.state.BagState;
 import org.apache.beam.sdk.state.CombiningState;
 import org.apache.beam.sdk.state.GroupingState;
 import org.apache.beam.sdk.state.MapState;
+import org.apache.beam.sdk.state.MultimapState;
 import org.apache.beam.sdk.state.OrderedListState;
 import org.apache.beam.sdk.state.ReadableState;
 import org.apache.beam.sdk.state.ReadableStates;
@@ -59,13 +60,14 @@ import org.apache.beam.sdk.transforms.windowing.TimestampCombiner;
 import org.apache.beam.sdk.util.CombineContextFactory;
 import org.apache.beam.sdk.values.TimestampedValue;
 import org.apache.beam.sdk.values.TimestampedValue.TimestampedValueCoder;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Maps;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.TreeMultiset;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.MoreObjects;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.HashMultimap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Maps;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.TreeMultiset;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -74,7 +76,6 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.api.common.typeutils.base.BooleanSerializer;
 import org.apache.flink.api.common.typeutils.base.StringSerializer;
-import org.apache.flink.api.common.typeutils.base.VoidSerializer;
 import org.apache.flink.runtime.state.KeyedStateBackend;
 import org.apache.flink.runtime.state.VoidNamespace;
 import org.apache.flink.runtime.state.VoidNamespaceSerializer;
@@ -91,8 +92,8 @@ import org.joda.time.Instant;
  * stored in a {@link ByteBuffer}.
  */
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class FlinkStateInternals<K> implements StateInternals {
 
@@ -151,6 +152,10 @@ public class FlinkStateInternals<K> implements StateInternals {
    * final watermark.
    */
   private final Set<StateAndNamespaceDescriptor<?>> globalWindowStateDescriptors = new HashSet<>();
+
+  /** Watermark holds descriptors created for a specific window. */
+  private final HashMultimap<String, FlinkWatermarkHoldState> watermarkHoldsMap =
+      HashMultimap.create();
 
   // Watermark holds for all keys/windows of this partition, allows efficient lookup of the minimum
   private final TreeMultiset<Long> watermarkHolds = TreeMultiset.create();
@@ -213,8 +218,10 @@ public class FlinkStateInternals<K> implements StateInternals {
             stateAndNamespace.stateDescriptor,
             (key, state) -> state.clear());
       }
+      watermarkHoldsMap.values().forEach(FlinkWatermarkHoldState::clear);
       // Clear set to avoid repeating the cleanup
       globalWindowStateDescriptors.clear();
+      watermarkHoldsMap.clear();
     } catch (Exception e) {
       throw new RuntimeException("Failed to cleanup global state.", e);
     }
@@ -287,6 +294,16 @@ public class FlinkStateInternals<K> implements StateInternals {
     }
 
     @Override
+    public <KeyT, ValueT> MultimapState<KeyT, ValueT> bindMultimap(
+        String id,
+        StateSpec<MultimapState<KeyT, ValueT>> spec,
+        Coder<KeyT> keyCoder,
+        Coder<ValueT> valueCoder) {
+      throw new UnsupportedOperationException(
+          String.format("%s is not supported", MultimapState.class.getSimpleName()));
+    }
+
+    @Override
     public <InputT, AccumT, OutputT> CombiningState<InputT, AccumT, OutputT> bindCombining(
         String id,
         StateSpec<CombiningState<InputT, AccumT, OutputT>> spec,
@@ -330,8 +347,15 @@ public class FlinkStateInternals<K> implements StateInternals {
         String id, StateSpec<WatermarkHoldState> spec, TimestampCombiner timestampCombiner) {
       collectGlobalWindowStateDescriptor(
           watermarkHoldStateDescriptor, VoidNamespace.INSTANCE, VoidNamespaceSerializer.INSTANCE);
-      return new FlinkWatermarkHoldState(
-          flinkStateBackend, watermarkHoldStateDescriptor, id, namespace, timestampCombiner);
+      FlinkWatermarkHoldState state =
+          new FlinkWatermarkHoldState(
+              flinkStateBackend, watermarkHoldStateDescriptor, id, namespace, timestampCombiner);
+      collectWatermarkHolds(state);
+      return state;
+    }
+
+    private void collectWatermarkHolds(FlinkWatermarkHoldState state) {
+      watermarkHoldsMap.put(namespace.stringKey(), state);
     }
 
     /** Take note of state bound to the global window for cleanup in clearGlobalState(). */
@@ -1384,7 +1408,9 @@ public class FlinkStateInternals<K> implements StateInternals {
       this.flinkStateBackend = flinkStateBackend;
       this.flinkStateDescriptor =
           new MapStateDescriptor<>(
-              stateId, new CoderTypeSerializer<>(coder, pipelineOptions), new BooleanSerializer());
+              stateId,
+              new CoderTypeSerializer<>(coder, pipelineOptions),
+              BooleanSerializer.INSTANCE);
     }
 
     @Override
@@ -1587,7 +1613,7 @@ public class FlinkStateInternals<K> implements StateInternals {
             new MapStateDescriptor<>(
                 id,
                 new CoderTypeSerializer<>(elemCoder, pipelineOptions),
-                VoidSerializer.INSTANCE));
+                BooleanSerializer.INSTANCE));
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -1627,6 +1653,16 @@ public class FlinkStateInternals<K> implements StateInternals {
       }
 
       return null;
+    }
+
+    @Override
+    public <KeyT, ValueT> MultimapState<KeyT, ValueT> bindMultimap(
+        String id,
+        StateSpec<MultimapState<KeyT, ValueT>> spec,
+        Coder<KeyT> keyCoder,
+        Coder<ValueT> valueCoder) {
+      throw new UnsupportedOperationException(
+          String.format("%s is not supported", MultimapState.class.getSimpleName()));
     }
 
     @Override

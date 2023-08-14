@@ -54,7 +54,7 @@ if TYPE_CHECKING:
   import google.cloud.bigtable.instance
 
 EXISTING_INSTANCES = []  # type: List[google.cloud.bigtable.instance.Instance]
-LABEL_KEY = u'python-bigtable-beam'
+LABEL_KEY = 'python-bigtable-beam'
 label_stamp = datetime.datetime.utcnow().replace(tzinfo=UTC)
 label_stamp_micros = _microseconds_from_datetime(label_stamp)
 LABELS = {LABEL_KEY: str(label_stamp_micros)}
@@ -141,7 +141,7 @@ class BigtableIOWriteTest(unittest.TestCase):
           self.LOCATION_ID,
           default_storage_type=self.STORAGE_TYPE)
       operation = self.instance.create(clusters=[cluster])
-      operation.result(timeout=10)
+      operation.result(timeout=300)  # Wait up to 5 min.
 
     self.table = self.instance.table(self.table_id)
 

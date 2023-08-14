@@ -18,15 +18,12 @@
 package org.apache.beam.sdk.extensions.sbe;
 
 import com.google.auto.value.AutoValue;
-import org.apache.beam.sdk.annotations.Experimental;
-import org.apache.beam.sdk.annotations.Experimental.Kind;
 import org.apache.beam.sdk.extensions.sbe.UnsignedOptions.Behavior;
 import org.apache.beam.sdk.schemas.Schema.Field;
 import org.apache.beam.sdk.schemas.Schema.FieldType;
 import uk.co.real_logic.sbe.PrimitiveType;
 
 /** Represents a primitive SBE field. */
-@Experimental(Kind.SCHEMAS)
 @AutoValue
 abstract class PrimitiveSbeField implements SbeField {
   private static final long serialVersionUID = 1L;
@@ -48,8 +45,9 @@ abstract class PrimitiveSbeField implements SbeField {
   private FieldType beamType(SbeFieldOptions options) {
     switch (type()) {
       case CHAR:
-        // TODO(BEAM-12697): Support char types
-        throw new UnsupportedOperationException("char type not supported yet (BEAM-12697)");
+        // TODO(https://github.com/apache/beam/issues/21102): Support char types
+        throw new UnsupportedOperationException(
+            "char type not supported yet (https://github.com/apache/beam/issues/21102)");
       case INT8:
         return FieldType.BYTE;
       case INT16:

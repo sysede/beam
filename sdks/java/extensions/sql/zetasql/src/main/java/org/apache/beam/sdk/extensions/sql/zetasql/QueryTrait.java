@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.extensions.sql.zetasql;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import com.google.zetasql.Table;
 import com.google.zetasql.resolvedast.ResolvedColumn;
@@ -31,7 +31,7 @@ import org.apache.beam.sdk.extensions.sql.zetasql.TableResolution.SimpleTableWit
 
 /** QueryTrait. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class QueryTrait {
   public Map<String, ResolvedWithEntry> withEntries = new HashMap<>();

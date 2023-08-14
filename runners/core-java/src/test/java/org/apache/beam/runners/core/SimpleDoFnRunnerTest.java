@@ -50,8 +50,8 @@ import org.apache.beam.sdk.util.WindowedValue;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.WindowingStrategy;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ArrayListMultimap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ListMultimap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ArrayListMultimap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ListMultimap;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
 import org.joda.time.format.PeriodFormat;
@@ -67,8 +67,10 @@ import org.mockito.MockitoAnnotations;
 /** Tests for {@link SimpleDoFnRunner}. */
 @RunWith(JUnit4.class)
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
-  "unused" // TODO(BEAM-13271): Remove when new version of errorprone is released (2.11.0)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
+  // TODO(https://github.com/apache/beam/issues/21230): Remove when new version of
+  // errorprone is released (2.11.0)
+  "unused"
 })
 public class SimpleDoFnRunnerTest {
   @Rule public ExpectedException thrown = ExpectedException.none();
@@ -318,7 +320,8 @@ public class SimpleDoFnRunnerTest {
         allOf(
             containsString("must be no earlier"),
             containsString(
-                String.format("timestamp of the current input (%s)", new Instant(0).toString())),
+                String.format(
+                    "timestamp of the current input or timer (%s)", new Instant(0).toString())),
             containsString(
                 String.format(
                     "the allowed skew (%s)",
@@ -369,7 +372,8 @@ public class SimpleDoFnRunnerTest {
         allOf(
             containsString("must be no earlier"),
             containsString(
-                String.format("timestamp of the current input (%s)", new Instant(0).toString())),
+                String.format(
+                    "timestamp of the current input or timer (%s)", new Instant(0).toString())),
             containsString(
                 String.format(
                     "the allowed skew (%s)",
@@ -626,7 +630,9 @@ public class SimpleDoFnRunnerTest {
         exception.getMessage(),
         allOf(
             containsString("must be no earlier"),
-            containsString(String.format("timestamp of the timer (%s)", new Instant(0).toString())),
+            containsString(
+                String.format(
+                    "timestamp of the current input or timer (%s)", new Instant(0).toString())),
             containsString(
                 String.format(
                     "the allowed skew (%s)",

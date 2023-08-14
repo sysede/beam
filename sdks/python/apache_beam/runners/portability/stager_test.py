@@ -52,6 +52,9 @@ class StagerTest(unittest.TestCase):
     if self._temp_dir:
       shutil.rmtree(self._temp_dir)
     self.stager = None
+    # [https://github.com/apache/beam/issues/21457] set pickler to dill by
+    # default.
+    pickler.set_library(pickler.DEFAULT_PICKLE_LIB)
 
   def make_temp_dir(self):
     if self._temp_dir is None:
@@ -92,62 +95,6 @@ class StagerTest(unittest.TestCase):
     _ = requirements_file
     self.create_temp_file(os.path.join(cache_dir, 'abc.txt'), 'nothing')
     self.create_temp_file(os.path.join(cache_dir, 'def.txt'), 'nothing')
-
-  def build_fake_pip_download_command_handler(self, has_wheels):
-    """A stub for apache_beam.utils.processes.check_output that imitates pip.
-
-      Args:
-        has_wheels: Whether pip fake should have a whl distribution of packages.
-      """
-    def pip_fake(args):
-      """Fakes fetching a package from pip by creating a temporary file.
-
-          Args:
-            args: a complete list of command line arguments to invoke pip.
-              The fake is sensitive to the order of the arguments.
-              Supported commands:
-
-              1) Download SDK sources file:
-              python pip -m download --dest /tmp/dir apache-beam==2.0.0 \
-                  --no-deps --no-binary :all:
-
-              2) Download SDK binary wheel file:
-              python pip -m download --dest /tmp/dir apache-beam==2.0.0 \
-                  --no-deps --no-binary :all: --python-version 27 \
-                  --implementation cp --abi cp27mu --platform manylinux1_x86_64
-          """
-      package_file = None
-      if len(args) >= 8:
-        # package_name==x.y.z
-        if '==' in args[6]:
-          distribution_name = args[6][0:args[6].find('==')]
-          distribution_version = args[6][args[6].find('==') + 2:]
-
-          if args[8] == '--no-binary':
-            package_file = '%s-%s.zip' % (
-                distribution_name, distribution_version)
-          elif args[8] == '--only-binary' and len(args) >= 18:
-            if not has_wheels:
-              # Imitate the case when desired wheel distribution is not in PyPI.
-              raise RuntimeError('No matching distribution.')
-
-            # Per PEP-0427 in wheel filenames non-alphanumeric characters
-            # in distribution name are replaced with underscore.
-            distribution_name = distribution_name.replace('-', '_')
-            package_file = '%s-%s-%s%s-%s-%s.whl' % (
-                distribution_name,
-                distribution_version,
-                args[13],  # implementation
-                args[11],  # python version
-                args[15],  # abi tag
-                args[17]  # platform
-            )
-
-      assert package_file, 'Pip fake does not support the command: ' + str(args)
-      self.create_temp_file(
-          FileSystems.join(args[5], package_file), 'Package content.')
-
-    return pip_fake
 
   @mock.patch('apache_beam.runners.portability.stager.open')
   @mock.patch('apache_beam.runners.portability.stager.get_new_http')
@@ -223,8 +170,8 @@ class StagerTest(unittest.TestCase):
   @pytest.mark.no_xdist
   @unittest.skipIf(
       sys.platform == "win32" and sys.version_info < (3, 8),
-      'BEAM-10987: pytest on Windows pulls in a zipimporter, unpicklable '
-      'before py3.8')
+      'https://github.com/apache/beam/issues/20659: pytest on Windows pulls '
+      'in a zipimporter, unpicklable before py3.8')
   def test_with_main_session(self):
     staging_dir = self.make_temp_dir()
     options = PipelineOptions()
@@ -240,9 +187,9 @@ class StagerTest(unittest.TestCase):
         os.path.isfile(
             os.path.join(staging_dir, names.PICKLED_MAIN_SESSION_FILE)))
 
-  # (BEAM-13769): Remove the decorator once cloudpickle is default pickle
-  # library
-  @pytest.mark.skip
+  # (https://github.com/apache/beam/issues/21457): Remove the decorator once
+  # cloudpickle is default pickle library
+  @pytest.mark.no_xdist
   def test_main_session_not_staged_when_using_cloudpickle(self):
     staging_dir = self.make_temp_dir()
     options = PipelineOptions()
@@ -428,38 +375,10 @@ class StagerTest(unittest.TestCase):
     self.update_options(options)
     options.view_as(SetupOptions).sdk_location = 'default'
 
-    with mock.patch(
-        'apache_beam.utils.processes.check_output',
-        self.build_fake_pip_download_command_handler(has_wheels=False)):
-      _, staged_resources = self.stager.create_and_stage_job_resources(
-          options, temp_dir=self.make_temp_dir(), staging_location=staging_dir)
+    _, staged_resources = self.stager.create_and_stage_job_resources(
+        options, temp_dir=self.make_temp_dir(), staging_location=staging_dir)
 
-    self.assertEqual([names.STAGED_SDK_SOURCES_FILENAME], staged_resources)
-
-    with open(os.path.join(staging_dir,
-                           names.STAGED_SDK_SOURCES_FILENAME)) as f:
-      self.assertEqual(f.read(), 'Package content.')
-
-  def test_sdk_location_default_with_wheels(self):
-    staging_dir = self.make_temp_dir()
-
-    options = PipelineOptions()
-    self.update_options(options)
-    options.view_as(SetupOptions).sdk_location = 'default'
-
-    with mock.patch(
-        'apache_beam.utils.processes.check_output',
-        self.build_fake_pip_download_command_handler(has_wheels=True)):
-      _, staged_resources = self.stager.create_and_stage_job_resources(
-          options, temp_dir=self.make_temp_dir(), staging_location=staging_dir)
-
-      self.assertEqual(len(staged_resources), 2)
-      self.assertEqual(staged_resources[0], names.STAGED_SDK_SOURCES_FILENAME)
-      # Exact name depends on the version of the SDK.
-      self.assertTrue(staged_resources[1].endswith('whl'))
-      for name in staged_resources:
-        with open(os.path.join(staging_dir, name)) as f:
-          self.assertEqual(f.read(), 'Package content.')
+    self.assertEqual([], staged_resources)
 
   def test_sdk_location_local_directory(self):
     staging_dir = self.make_temp_dir()
@@ -828,6 +747,49 @@ class StagerTest(unittest.TestCase):
         if f != stager.REQUIREMENTS_FILE:
           self.assertTrue('.tar.gz' in f)
           self.assertTrue('.whl' not in f)
+
+  def test_populate_requirements_cache_with_local_files(self):
+    staging_dir = self.make_temp_dir()
+    requirements_cache_dir = self.make_temp_dir()
+    source_dir = self.make_temp_dir()
+    pkg_dir = self.make_temp_dir()
+
+    options = PipelineOptions()
+    self.update_options(options)
+
+    options.view_as(SetupOptions).requirements_cache = requirements_cache_dir
+    options.view_as(SetupOptions).requirements_file = os.path.join(
+        source_dir, stager.REQUIREMENTS_FILE)
+    local_package = os.path.join(pkg_dir, 'local_package.tar.gz')
+    self.create_temp_file(local_package, 'local-package-content')
+    self.create_temp_file(
+        os.path.join(source_dir, stager.REQUIREMENTS_FILE),
+        '\n'.join(['fake_pypi', local_package]))
+    with mock.patch('apache_beam.runners.portability.stager_test'
+                    '.stager.Stager._populate_requirements_cache',
+                    staticmethod(self._populate_requitements_cache_fake)):
+      options.view_as(SetupOptions).requirements_cache_only_sources = True
+      resources = self.stager.create_and_stage_job_resources(
+          options, staging_location=staging_dir)[1]
+
+      self.assertEqual(
+          sorted([
+              stager.REQUIREMENTS_FILE,
+              stager.EXTRA_PACKAGES_FILE,
+              'nothing.tar.gz',
+              'local_package.tar.gz'
+          ]),
+          sorted(resources))
+
+      with open(os.path.join(staging_dir, stager.REQUIREMENTS_FILE)) as fin:
+        requirements_contents = fin.read()
+      self.assertIn('fake_pypi', requirements_contents)
+      self.assertNotIn('local_package', requirements_contents)
+
+      with open(os.path.join(staging_dir, stager.EXTRA_PACKAGES_FILE)) as fin:
+        extra_packages_contents = fin.read()
+      self.assertNotIn('fake_pypi', extra_packages_contents)
+      self.assertIn('local_package', extra_packages_contents)
 
 
 class TestStager(stager.Stager):

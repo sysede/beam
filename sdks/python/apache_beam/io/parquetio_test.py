@@ -40,6 +40,7 @@ from apache_beam.io.parquetio import ReadAllFromParquetBatched
 from apache_beam.io.parquetio import ReadFromParquet
 from apache_beam.io.parquetio import ReadFromParquetBatched
 from apache_beam.io.parquetio import WriteToParquet
+from apache_beam.io.parquetio import WriteToParquetBatched
 from apache_beam.io.parquetio import _create_parquet_sink
 from apache_beam.io.parquetio import _create_parquet_source
 from apache_beam.testing.test_pipeline import TestPipeline
@@ -284,8 +285,6 @@ class TestParquet(unittest.TestCase):
         file_name,
         self.SCHEMA,
         'none',
-        1024 * 1024,
-        1000,
         False,
         False,
         '.end',
@@ -299,7 +298,6 @@ class TestParquet(unittest.TestCase):
             'file_pattern',
             'some_parquet_sink-%(shard_num)05d-of-%(num_shards)05d.end'),
         DisplayDataItemMatcher('codec', 'none'),
-        DisplayDataItemMatcher('row_group_buffer_size', str(1024 * 1024)),
         DisplayDataItemMatcher('compression', 'uncompressed')
     ]
     hc.assert_that(dd.items, hc.contains_inanyorder(*expected_items))
@@ -308,10 +306,26 @@ class TestParquet(unittest.TestCase):
     file_name = 'some_parquet_sink'
     write = WriteToParquet(file_name, self.SCHEMA)
     dd = DisplayData.create_from(write)
+
     expected_items = [
         DisplayDataItemMatcher('codec', 'none'),
         DisplayDataItemMatcher('schema', str(self.SCHEMA)),
         DisplayDataItemMatcher('row_group_buffer_size', str(64 * 1024 * 1024)),
+        DisplayDataItemMatcher(
+            'file_pattern',
+            'some_parquet_sink-%(shard_num)05d-of-%(num_shards)05d'),
+        DisplayDataItemMatcher('compression', 'uncompressed')
+    ]
+    hc.assert_that(dd.items, hc.contains_inanyorder(*expected_items))
+
+  def test_write_batched_display_data(self):
+    file_name = 'some_parquet_sink'
+    write = WriteToParquetBatched(file_name, self.SCHEMA)
+    dd = DisplayData.create_from(write)
+
+    expected_items = [
+        DisplayDataItemMatcher('codec', 'none'),
+        DisplayDataItemMatcher('schema', str(self.SCHEMA)),
         DisplayDataItemMatcher(
             'file_pattern',
             'some_parquet_sink-%(shard_num)05d-of-%(num_shards)05d'),
@@ -339,6 +353,22 @@ class TestParquet(unittest.TestCase):
         _ = p \
         | Create(self.RECORDS) \
         | WriteToParquet(
+            path, self.SCHEMA, num_shards=1, shard_name_template='')
+      with TestPipeline() as p:
+        # json used for stable sortability
+        readback = \
+            p \
+            | ReadFromParquet(path) \
+            | Map(json.dumps)
+        assert_that(readback, equal_to([json.dumps(r) for r in self.RECORDS]))
+
+  def test_sink_transform_batched(self):
+    with TemporaryDirectory() as tmp_dirname:
+      path = os.path.join(tmp_dirname + "tmp_filename")
+      with TestPipeline() as p:
+        _ = p \
+        | Create([self._records_as_arrow()]) \
+        | WriteToParquetBatched(
             path, self.SCHEMA, num_shards=1, shard_name_template='')
       with TestPipeline() as p:
         # json used for stable sortability
@@ -424,7 +454,7 @@ class TestParquet(unittest.TestCase):
     # a list of pa.Table instances to model this expecation
     expected_result = [
         pa.Table.from_batches([batch]) for batch in self._records_as_arrow(
-            count=12000).to_batches(chunksize=1000)
+            count=12000).to_batches(max_chunksize=1000)
     ]
     self._run_parquet_test(file_name, None, None, False, expected_result)
 
@@ -434,7 +464,7 @@ class TestParquet(unittest.TestCase):
     # a list of pa.Table instances to model this expecation
     expected_result = [
         pa.Table.from_batches([batch]) for batch in self._records_as_arrow(
-            count=12000).to_batches(chunksize=1000)
+            count=12000).to_batches(max_chunksize=1000)
     ]
     self._run_parquet_test(file_name, None, 10000, True, expected_result)
 
@@ -472,7 +502,7 @@ class TestParquet(unittest.TestCase):
     orig = self._records_as_arrow(count=120, schema=self.SCHEMA96)
     expected_result = [
         pa.Table.from_batches([batch], schema=self.SCHEMA96)
-        for batch in orig.to_batches(chunksize=20)
+        for batch in orig.to_batches(max_chunksize=20)
     ]
     self._run_parquet_test(file_name, None, None, False, expected_result)
 

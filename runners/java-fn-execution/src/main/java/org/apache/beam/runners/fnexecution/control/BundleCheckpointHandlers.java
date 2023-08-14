@@ -33,20 +33,20 @@ import org.apache.beam.sdk.state.TimeDomain;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.util.WindowedValue;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
 
 /** Utility methods for creating {@link BundleCheckpointHandler}s. */
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class BundleCheckpointHandlers {
 
   /**
    * A {@link BundleCheckpointHandler} which uses {@link
-   * org.apache.beam.runners.core.TimerInternals.TimerData} ans {@link
+   * org.apache.beam.runners.core.TimerInternals.TimerData} and {@link
    * org.apache.beam.sdk.state.ValueState} to reschedule {@link DelayedBundleApplication}.
    */
   public static class StateAndTimerBundleCheckpointHandler<T> implements BundleCheckpointHandler {
@@ -108,7 +108,7 @@ public class BundleCheckpointHandlers {
           // Calculate the watermark hold for the timer.
           long outputTimestamp = BoundedWindow.TIMESTAMP_MAX_VALUE.getMillis();
           if (!residual.getApplication().getOutputWatermarksMap().isEmpty()) {
-            for (org.apache.beam.vendor.grpc.v1p43p2.com.google.protobuf.Timestamp outputWatermark :
+            for (org.apache.beam.vendor.grpc.v1p54p0.com.google.protobuf.Timestamp outputWatermark :
                 residual.getApplication().getOutputWatermarksMap().values()) {
               outputTimestamp = Math.min(outputTimestamp, outputWatermark.getSeconds() * 1000);
             }

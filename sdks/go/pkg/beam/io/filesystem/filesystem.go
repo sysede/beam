@@ -28,11 +28,21 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/internal/errors"
 )
 
 var registry = make(map[string]func(context.Context) Interface)
+
+// wellKnownSchemeImportPaths is used for delivering useful error messages when a
+// scheme is not found.
+var wellKnownSchemeImportPaths = map[string]string{
+	"memfs":   "github.com/apache/beam/sdks/v2/go/pkg/beam/io/filesystem/memfs",
+	"default": "github.com/apache/beam/sdks/v2/go/pkg/beam/io/filesystem/local",
+	"gs":      "github.com/apache/beam/sdks/v2/go/pkg/beam/io/filesystem/gcs",
+	"s3":      "github.com/apache/beam/sdks/v2/go/pkg/beam/io/filesystem/s3",
+}
 
 // Register registers a file system backend under the given scheme.  For
 // example, "hdfs" would be registered a HFDS file system and HDFS paths used
@@ -49,9 +59,17 @@ func New(ctx context.Context, path string) (Interface, error) {
 	scheme := getScheme(path)
 	mkfs, ok := registry[scheme]
 	if !ok {
-		return nil, errors.Errorf("file system scheme %v not registered for %v", scheme, path)
+		return nil, errorForMissingScheme(scheme, path)
 	}
 	return mkfs(ctx), nil
+}
+
+func errorForMissingScheme(scheme, path string) error {
+	messageSuffix := ""
+	if suggestedImportPath, ok := wellKnownSchemeImportPaths[scheme]; ok {
+		messageSuffix = fmt.Sprintf(": Consider adding the following import to your program to register an implementation for %q:\n  import _ %q", scheme, suggestedImportPath)
+	}
+	return errors.Errorf("file system scheme %q not registered for %q%s", scheme, path, messageSuffix)
 }
 
 // Interface is a filesystem abstraction that allows beam io sources and sinks
@@ -60,6 +78,7 @@ type Interface interface {
 	io.Closer
 
 	// List expands a pattern to a list of filenames.
+	// Returns nil if there are no matching files.
 	List(ctx context.Context, glob string) ([]string, error)
 
 	// OpenRead opens a file for reading.
@@ -72,7 +91,13 @@ type Interface interface {
 }
 
 // The following interfaces are optional for the filesystems, but
-// to support
+// to support more efficient or composite operations when possible.
+
+// LastModifiedGetter is an interface for getting the last modified time
+// of a file.
+type LastModifiedGetter interface {
+	LastModified(ctx context.Context, filename string) (time.Time, error)
+}
 
 // Remover is an interface for removing files from the filesystem.
 // To be considered for promotion to Interface.
@@ -105,6 +130,6 @@ func ValidateScheme(path string) {
 	}
 	scheme := getScheme(path)
 	if _, ok := registry[scheme]; !ok {
-		panic(fmt.Sprintf("filesystem scheme %v not registered", scheme))
+		panic(errorForMissingScheme(scheme, path))
 	}
 }

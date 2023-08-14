@@ -21,17 +21,18 @@ import static java.math.MathContext.DECIMAL128;
 import static org.apache.beam.sdk.io.gcp.spanner.changestreams.restriction.TimestampUtils.next;
 import static org.apache.beam.sdk.io.gcp.spanner.changestreams.restriction.TimestampUtils.toNanos;
 import static org.apache.beam.sdk.io.gcp.spanner.changestreams.restriction.TimestampUtils.toTimestamp;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import com.google.cloud.Timestamp;
 import java.math.BigDecimal;
 import java.util.function.Supplier;
+import org.apache.beam.sdk.io.gcp.spanner.changestreams.model.PartitionMetadata;
 import org.apache.beam.sdk.transforms.splittabledofn.RestrictionTracker;
 import org.apache.beam.sdk.transforms.splittabledofn.RestrictionTracker.HasProgress;
 import org.apache.beam.sdk.transforms.splittabledofn.SplitResult;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,7 @@ import org.slf4j.LoggerFactory;
  * Timestamp.MAX_VALUE - 1 nanosecond}.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class TimestampRangeTracker extends RestrictionTracker<TimestampRange, Timestamp>
     implements HasProgress {
@@ -97,6 +98,29 @@ public class TimestampRangeTracker extends RestrictionTracker<TimestampRange, Ti
         "Trying to claim offset %s before start of the range %s",
         position,
         range);
+    lastAttemptedPosition = position;
+
+    // It is ok to try to claim offsets beyond of the range, this will simply return false
+    if (position.compareTo(range.getTo()) >= 0) {
+      return false;
+    }
+    lastClaimedPosition = position;
+    return true;
+  }
+
+  public boolean tryClaim(Timestamp position, PartitionMetadata partitionMetadata) {
+    checkArgument(
+        lastAttemptedPosition == null || position.compareTo(lastAttemptedPosition) > 0,
+        "Trying to claim offset %s while last attempted was %s. The partition metadata: %s",
+        position,
+        lastAttemptedPosition,
+        partitionMetadata.toString());
+    checkArgument(
+        position.compareTo(range.getFrom()) >= 0,
+        "Trying to claim offset %s before start of the range %s. The partition metadata: %s",
+        position,
+        range,
+        partitionMetadata.toString());
     lastAttemptedPosition = position;
 
     // It is ok to try to claim offsets beyond of the range, this will simply return false
@@ -204,7 +228,15 @@ public class TimestampRangeTracker extends RestrictionTracker<TimestampRange, Ti
    */
   @Override
   public Progress getProgress() {
-    final BigDecimal now = BigDecimal.valueOf(timeSupplier.get().getSeconds());
+    BigDecimal end;
+    if (range.getTo().compareTo(Timestamp.MAX_VALUE) == 0) {
+      // When the given end timestamp equals to Timestamp.MAX_VALUE, this means that
+      // the end timestamp is not specified which should be a streaming job. So we
+      // use now() as the end timestamp.
+      end = BigDecimal.valueOf(timeSupplier.get().getSeconds());
+    } else {
+      end = BigDecimal.valueOf(range.getTo().getSeconds());
+    }
     BigDecimal current;
     if (lastClaimedPosition == null) {
       current = BigDecimal.valueOf(range.getFrom().getSeconds());
@@ -213,15 +245,13 @@ public class TimestampRangeTracker extends RestrictionTracker<TimestampRange, Ti
     }
     // The remaining work must be greater than 0. Otherwise, it will cause an issue
     // that the watermark does not advance.
-    final BigDecimal workRemaining = now.subtract(current).max(BigDecimal.ONE);
+    final BigDecimal workRemaining = end.subtract(current).max(BigDecimal.ONE);
 
     LOG.debug(
-        "Reported progress - current:"
-            + current.doubleValue()
-            + " now:"
-            + now.doubleValue()
-            + " workRemaining:"
-            + workRemaining.doubleValue());
+        "Reported progress current: {}, end: {}, workRemaining: {}",
+        current.doubleValue(),
+        end.doubleValue(),
+        workRemaining.doubleValue());
 
     return Progress.from(current.doubleValue(), workRemaining.doubleValue());
   }

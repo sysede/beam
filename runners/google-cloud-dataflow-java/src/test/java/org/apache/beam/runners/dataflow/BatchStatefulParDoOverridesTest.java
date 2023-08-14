@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -49,7 +50,7 @@ import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -58,7 +59,8 @@ import org.junit.runners.JUnit4;
 
 /** Tests for {@link BatchStatefulParDoOverrides}. */
 @RunWith(JUnit4.class)
-// TODO(BEAM-13271): Remove when new version of errorprone is released (2.11.0)
+// TODO(https://github.com/apache/beam/issues/21230): Remove when new version of errorprone is
+// released (2.11.0)
 @SuppressWarnings("unused")
 public class BatchStatefulParDoOverridesTest implements Serializable {
 
@@ -188,7 +190,7 @@ public class BatchStatefulParDoOverridesTest implements Serializable {
     GcsUtil mockGcsUtil = mock(GcsUtil.class);
     when(mockGcsUtil.expand(any(GcsPath.class)))
         .then(invocation -> ImmutableList.of((GcsPath) invocation.getArguments()[0]));
-    when(mockGcsUtil.bucketAccessible(any(GcsPath.class))).thenReturn(true);
+    doNothing().when(mockGcsUtil).verifyBucketAccessible(any(GcsPath.class));
 
     DataflowPipelineOptions options =
         PipelineOptionsFactory.fromArgs(args).as(DataflowPipelineOptions.class);

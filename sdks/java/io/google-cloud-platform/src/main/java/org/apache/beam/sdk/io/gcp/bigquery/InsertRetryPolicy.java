@@ -21,7 +21,7 @@ import com.google.api.services.bigquery.model.ErrorProto;
 import com.google.api.services.bigquery.model.TableDataInsertAllResponse;
 import java.io.Serializable;
 import java.util.Set;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSet;
 
 /** A retry policy for streaming BigQuery inserts. */
 public abstract class InsertRetryPolicy implements Serializable {
@@ -46,7 +46,7 @@ public abstract class InsertRetryPolicy implements Serializable {
 
   // A list of known persistent errors for which retrying never helps.
   static final Set<String> PERSISTENT_ERRORS =
-      ImmutableSet.of("invalid", "invalidQuery", "notImplemented", "row-too-large");
+      ImmutableSet.of("invalid", "invalidQuery", "notImplemented", "row-too-large", "parseError");
 
   /** Return true if this failure should be retried. */
   public abstract boolean shouldRetry(Context context);

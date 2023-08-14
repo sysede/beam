@@ -46,6 +46,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -67,6 +68,7 @@ public class PCollectionCustomCoderTest {
 
   @Rule public final transient ExpectedException thrown = ExpectedException.none();
   @Rule public final transient TestPipeline pipeline = TestPipeline.create();
+  @Rule public transient Timeout globalTimeout = Timeout.seconds(1200);
 
   /** Wrapper of StringUtf8Coder with customizable exception-throwing. */
   public static class CustomTestCoder extends CustomCoder<String> {
@@ -220,7 +222,7 @@ public class PCollectionCustomCoderTest {
     p.run().waitUntilFinish();
   }
 
-  // TODO(BEAM-6004) Have DirectRunner trigger deserialization.
+  // TODO(https://github.com/apache/beam/issues/19185) Have DirectRunner trigger deserialization.
   @Ignore("DirectRunner doesn't decode coders so this test does not pass.")
   @Test
   @Category(NeedsRunner.class)
@@ -232,7 +234,7 @@ public class PCollectionCustomCoderTest {
     p.run().waitUntilFinish();
   }
 
-  // TODO(BEAM-6004) Have DirectRunner trigger deserialization.
+  // TODO(https://github.com/apache/beam/issues/19185) Have DirectRunner trigger deserialization.
   @Ignore("DirectRunner doesn't decode coders so this test does not pass.")
   @Test
   @Category(NeedsRunner.class)

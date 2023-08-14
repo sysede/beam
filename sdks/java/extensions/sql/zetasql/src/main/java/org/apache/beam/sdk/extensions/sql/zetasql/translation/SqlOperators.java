@@ -66,8 +66,8 @@ import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.sql.validate.Sq
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.sql.validate.SqlUserDefinedFunction;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.util.Optionality;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.util.Util;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
 
 /**
  * A separate SqlOperators table for those functions that do not exist or not compatible with
@@ -75,7 +75,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
  */
 @Internal
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class SqlOperators {
   public static final SqlOperator ZETASQL_TIMESTAMP_ADD =
@@ -190,7 +190,7 @@ public class SqlOperators {
       if (resolvedExpr instanceof ResolvedNodes.ResolvedLiteral) {
         delimiter = ((ResolvedNodes.ResolvedLiteral) resolvedExpr).getValue();
       } else {
-        // TODO(BEAM-13673) Add support for params
+        // TODO(https://github.com/apache/beam/issues/21283) Add support for params
         throw new ZetaSqlException(
             new StatusRuntimeException(
                 Status.INVALID_ARGUMENT.withDescription(

@@ -19,7 +19,7 @@ package org.apache.beam.runners.dataflow.util;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Strings;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Strings;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -41,7 +41,7 @@ import org.joda.time.chrono.ISOChronology;
  * digits (microsecond resolution), or nine digits (nanosecond resolution).
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public final class TimeUtil {
   private TimeUtil() {} // Non-instantiable.

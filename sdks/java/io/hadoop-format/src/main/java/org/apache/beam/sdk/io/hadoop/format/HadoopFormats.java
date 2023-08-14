@@ -19,7 +19,7 @@ package org.apache.beam.sdk.io.hadoop.format;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.UUID;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -35,7 +35,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** Utility class for working with Hadoop related objects. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 final class HadoopFormats {
 

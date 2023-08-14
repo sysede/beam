@@ -20,7 +20,7 @@ package org.apache.beam.sdk.io.aws.dynamodb;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -41,8 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.apache.beam.sdk.annotations.Experimental;
-import org.apache.beam.sdk.annotations.Experimental.Kind;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.coders.MapCoder;
@@ -64,8 +62,8 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TypeDescriptor;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSet;
 import org.apache.http.HttpStatus;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Duration;
@@ -131,10 +129,14 @@ import org.slf4j.LoggerFactory;
  *   <li>ScanRequestFn, which you build a ScanRequest object with at least table name and total
  *       number of segment. Note This number should base on the number of your workers
  * </ul>
+ *
+ * @deprecated Module <code>beam-sdks-java-io-amazon-web-services</code> is deprecated and will be
+ *     eventually removed. Please migrate to {@link org.apache.beam.sdk.io.aws2.dynamodb.DynamoDBIO}
+ *     in module <code>beam-sdks-java-io-amazon-web-services2</code>.
  */
-@Experimental(Kind.SOURCE_SINK)
+@Deprecated
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public final class DynamoDBIO {
   public static <T> Read<T> read() {
@@ -227,6 +229,11 @@ public final class DynamoDBIO {
 
     @Override
     public PCollection<T> expand(PBegin input) {
+      LoggerFactory.getLogger(DynamoDBIO.class)
+          .warn(
+              "You are using a deprecated IO for DynamoDB. Please migrate to module "
+                  + "'org.apache.beam:beam-sdks-java-io-amazon-web-services2'.");
+
       checkArgument((getScanRequestFn() != null), "withScanRequestFn() is required");
       checkArgument((getAwsClientsProvider() != null), "withAwsClientsProvider() is required");
       ScanRequest scanRequest = getScanRequestFn().apply(null);
@@ -454,6 +461,11 @@ public final class DynamoDBIO {
 
     @Override
     public PCollection<Void> expand(PCollection<T> input) {
+      LoggerFactory.getLogger(DynamoDBIO.class)
+          .warn(
+              "You are using a deprecated IO for DynamoDB. Please migrate to module "
+                  + "'org.apache.beam:beam-sdks-java-io-amazon-web-services2'.");
+
       return input.apply(ParDo.of(new WriteFn<>(this)));
     }
 

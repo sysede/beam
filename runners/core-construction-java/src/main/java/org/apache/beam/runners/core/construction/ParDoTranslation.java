@@ -26,9 +26,9 @@ import static org.apache.beam.runners.core.construction.PTransformTranslation.SP
 import static org.apache.beam.runners.core.construction.PTransformTranslation.SPLITTABLE_TRUNCATE_SIZED_RESTRICTION_URN;
 import static org.apache.beam.sdk.transforms.reflect.DoFnSignatures.getStateSpecOrThrow;
 import static org.apache.beam.sdk.transforms.reflect.DoFnSignatures.getTimerSpecOrThrow;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import com.google.auto.value.AutoValue;
 import java.io.IOException;
@@ -79,15 +79,15 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
-import org.apache.beam.vendor.grpc.v1p43p2.com.google.protobuf.ByteString;
-import org.apache.beam.vendor.grpc.v1p43p2.com.google.protobuf.InvalidProtocolBufferException;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
+import org.apache.beam.vendor.grpc.v1p54p0.com.google.protobuf.ByteString;
+import org.apache.beam.vendor.grpc.v1p54p0.com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets;
 
 /** Utilities for interacting with {@link ParDo} instances and {@link ParDoPayload} protos. */
 @SuppressWarnings({
-  "rawtypes" // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes" // TODO(https://github.com/apache/beam/issues/20447)
 })
 public class ParDoTranslation {
   /**
@@ -599,7 +599,8 @@ public class ParDoTranslation {
                 .setOrderedListSpec(
                     RunnerApi.OrderedListStateSpec.newBuilder()
                         .setElementCoderId(registerCoderOrThrow(components, elementCoder)))
-                // TODO(BEAM-10650): Update with correct protocol once the protocol is defined and
+                // TODO(https://github.com/apache/beam/issues/20486): Update with correct protocol
+                // once the protocol is defined and
                 // the SDK harness uses it.
                 .build();
           }
@@ -633,6 +634,17 @@ public class ParDoTranslation {
                 .setSetSpec(
                     RunnerApi.SetStateSpec.newBuilder()
                         .setElementCoderId(registerCoderOrThrow(components, elementCoder)))
+                .setProtocol(FunctionSpec.newBuilder().setUrn(MULTIMAP_USER_STATE))
+                .build();
+          }
+
+          @Override
+          public RunnerApi.StateSpec dispatchMultimap(Coder<?> keyCoder, Coder<?> valueCoder) {
+            return builder
+                .setMultimapSpec(
+                    RunnerApi.MultimapStateSpec.newBuilder()
+                        .setKeyCoderId(registerCoderOrThrow(components, keyCoder))
+                        .setValueCoderId(registerCoderOrThrow(components, valueCoder)))
                 .setProtocol(FunctionSpec.newBuilder().setUrn(MULTIMAP_USER_STATE))
                 .build();
           }

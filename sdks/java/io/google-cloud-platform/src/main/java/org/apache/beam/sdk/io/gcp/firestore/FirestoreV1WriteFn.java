@@ -52,8 +52,8 @@ import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.util.BackOffUtils;
 import org.apache.beam.sdk.values.KV;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Duration;
@@ -203,10 +203,13 @@ final class FirestoreV1WriteFn {
     @Override
     public final void startBundle(StartBundleContext c) {
       String project = c.getPipelineOptions().as(GcpOptions.class).getProject();
+      String databaseId = c.getPipelineOptions().as(FirestoreOptions.class).getFirestoreDb();
       databaseRootName =
           DatabaseRootName.of(
               requireNonNull(project, "project must be defined on GcpOptions of PipelineOptions"),
-              "(default)");
+              requireNonNull(
+                  databaseId,
+                  "firestoreDb must be defined on FirestoreOptions of PipelineOptions"));
       firestoreStub = firestoreStatefulComponentFactory.getFirestoreStub(c.getPipelineOptions());
     }
 

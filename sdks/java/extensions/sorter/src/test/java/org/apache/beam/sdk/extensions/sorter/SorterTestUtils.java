@@ -25,12 +25,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 import org.apache.beam.sdk.values.KV;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.primitives.UnsignedBytes;
 import org.junit.rules.ExpectedException;
 
 /** A set of basic tests for {@link Sorter}s. */
 @SuppressWarnings({
-  "rawtypes" // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes" // TODO(https://github.com/apache/beam/issues/20447)
 })
 class SorterTestUtils {
 

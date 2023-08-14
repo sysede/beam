@@ -30,8 +30,8 @@ import javax.annotation.Nonnull;
 import org.apache.beam.sdk.runners.AppliedPTransform;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.values.WindowingStrategy;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ComparisonChain;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Ordering;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ComparisonChain;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Ordering;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
 
@@ -51,7 +51,7 @@ import org.joda.time.Instant;
  * transform with the current value of the watermark.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 class WatermarkCallbackExecutor {
   /** Create a new {@link WatermarkCallbackExecutor}. */

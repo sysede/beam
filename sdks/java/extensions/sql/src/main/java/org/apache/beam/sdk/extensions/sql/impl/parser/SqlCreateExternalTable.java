@@ -19,8 +19,8 @@ package org.apache.beam.sdk.extensions.sql.impl.parser;
 
 import static com.alibaba.fastjson.JSON.parseObject;
 import static org.apache.beam.sdk.schemas.Schema.toSchema;
-import static org.apache.beam.vendor.calcite.v1_28_0.com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.util.Static.RESOURCE;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
 
 import com.alibaba.fastjson.JSONObject;
 import java.util.List;
@@ -43,7 +43,7 @@ import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.util.Pair;
 
 /** Parse tree for {@code CREATE EXTERNAL TABLE} statement. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class SqlCreateExternalTable extends SqlCreate implements BeamSqlParser.ExecutableStatement {
   private final SqlIdentifier name;

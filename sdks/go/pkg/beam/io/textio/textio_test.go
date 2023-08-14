@@ -17,34 +17,39 @@
 package textio
 
 import (
-	"context"
 	"errors"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	_ "github.com/apache/beam/sdks/v2/go/pkg/beam/io/filesystem/local"
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/testing/passert"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/testing/ptest"
 )
 
-const testFilePath = "../../../../data/textio_test.txt"
+func TestMain(m *testing.M) {
+	ptest.Main(m)
+}
 
-func TestReadFn(t *testing.T) {
-	receivedLines := []string{}
-	getLines := func(line string) {
-		receivedLines = append(receivedLines, line)
-	}
+func init() {
+	register.Function2x1(toKV)
+}
 
-	err := readFn(context.Background(), testFilePath, getLines)
-	if err != nil {
-		t.Fatalf("failed with %v", err)
-	}
-	want := 1
-	if len(receivedLines) != 1 {
-		t.Fatalf("received %v lines, want %v", len(receivedLines), want)
-	}
+const testDir = "../../../../data"
 
+var (
+	testFilePath   = filepath.Join(testDir, "textio_test.txt")
+	testGzFilePath = filepath.Join(testDir, "textio_test.gz")
+)
+
+type kv struct {
+	K, V string
+}
+
+func toKV(k, v string) kv {
+	return kv{k, v}
 }
 
 func TestRead(t *testing.T) {
@@ -55,11 +60,43 @@ func TestRead(t *testing.T) {
 	ptest.RunAndValidate(t, p)
 }
 
+func TestReadGzip(t *testing.T) {
+	p, s := beam.NewPipelineWithRoot()
+	got := Read(s, testGzFilePath, ReadGzip())
+	want := []any{"hello", "go"}
+
+	passert.Equals(s, got, want...)
+	ptest.RunAndValidate(t, p)
+}
+
 func TestReadAll(t *testing.T) {
 	p, s, files := ptest.CreateList([]string{testFilePath})
 	lines := ReadAll(s, files)
 	passert.Count(s, lines, "NumLines", 1)
 
+	ptest.RunAndValidate(t, p)
+}
+
+func TestReadAllGzip(t *testing.T) {
+	p, s, files := ptest.CreateList([]string{testGzFilePath})
+	got := ReadAll(s, files, ReadGzip())
+	want := []any{"hello", "go"}
+
+	passert.Equals(s, got, want...)
+	ptest.RunAndValidate(t, p)
+}
+
+func TestReadWithFilename(t *testing.T) {
+	p, s := beam.NewPipelineWithRoot()
+	lines := ReadWithFilename(s, testGzFilePath)
+	got := beam.ParDo(s, toKV, lines)
+
+	want := []any{
+		kv{K: testGzFilePath, V: "hello"},
+		kv{K: testGzFilePath, V: "go"},
+	}
+
+	passert.Equals(s, got, want...)
 	ptest.RunAndValidate(t, p)
 }
 
@@ -103,6 +140,26 @@ func TestImmediate(t *testing.T) {
 		t.Fatalf("Failed to insert Immediate: %v", err)
 	}
 	passert.Count(s, lines, "NumLines", 2)
+
+	ptest.RunAndValidate(t, p)
+}
+
+// TestReadSdf tests that readSdf successfully reads a test text file, and
+// outputs the correct number of lines for it, even for an exceedingly long
+// line.
+func TestReadSdf(t *testing.T) {
+	p, s := beam.NewPipelineWithRoot()
+	lines := ReadSdf(s, testFilePath)
+	passert.Count(s, lines, "NumLines", 1)
+
+	ptest.RunAndValidate(t, p)
+}
+
+func TestReadAllSdf(t *testing.T) {
+	p, s := beam.NewPipelineWithRoot()
+	files := beam.Create(s, testFilePath)
+	lines := ReadAllSdf(s, files)
+	passert.Count(s, lines, "NumLines", 1)
 
 	ptest.RunAndValidate(t, p)
 }

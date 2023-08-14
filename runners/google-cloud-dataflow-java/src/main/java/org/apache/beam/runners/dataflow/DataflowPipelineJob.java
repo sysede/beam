@@ -18,7 +18,7 @@
 package org.apache.beam.runners.dataflow;
 
 import static org.apache.beam.runners.dataflow.util.TimeUtil.fromCloudTime;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects.firstNonNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.MoreObjects.firstNonNull;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.util.BackOff;
@@ -43,10 +43,10 @@ import org.apache.beam.sdk.extensions.gcp.util.BackOffAdapter;
 import org.apache.beam.sdk.metrics.MetricResults;
 import org.apache.beam.sdk.runners.AppliedPTransform;
 import org.apache.beam.sdk.util.FluentBackoff;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.BiMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.HashBiMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.BiMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.HashBiMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -54,14 +54,14 @@ import org.slf4j.LoggerFactory;
 
 /** A DataflowPipelineJob represents a job submitted to Dataflow using {@link DataflowRunner}. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class DataflowPipelineJob implements PipelineResult {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataflowPipelineJob.class);
 
   /** The id for the job. */
-  protected String jobId;
+  private final String jobId;
 
   /** The {@link DataflowPipelineOptions} for the job. */
   private final DataflowPipelineOptions dataflowOptions;
@@ -84,7 +84,7 @@ public class DataflowPipelineJob implements PipelineResult {
   /** The job that replaced this one or {@code null} if the job has not been replaced. */
   private @Nullable DataflowPipelineJob replacedByJob = null;
 
-  protected BiMap<AppliedPTransform<?, ?, ?>, String> transformStepNames;
+  private final BiMap<AppliedPTransform<?, ?, ?>, String> transformStepNames;
 
   /** The latest timestamp up to which job messages have been retrieved. */
   private long lastTimestamp = Long.MIN_VALUE;
@@ -179,6 +179,10 @@ public class DataflowPipelineJob implements PipelineResult {
   /** Get the region this job exists in. */
   public String getRegion() {
     return dataflowOptions.getRegion();
+  }
+
+  protected @Nullable BiMap<AppliedPTransform<?, ?, ?>, String> getTransformStepNames() {
+    return transformStepNames;
   }
 
   /**
@@ -305,7 +309,7 @@ public class DataflowPipelineJob implements PipelineResult {
     BackOff backoff = getMessagesBackoff(duration);
 
     // This function tracks the cumulative time from the *first request* to enforce the wall-clock
-    // limit. Any backoff instance could, at best, track the the time since the first attempt at a
+    // limit. Any backoff instance could, at best, track the time since the first attempt at a
     // given request. Thus, we need to track the cumulative time ourselves.
     long startNanos = nanoClock.nanoTime();
 

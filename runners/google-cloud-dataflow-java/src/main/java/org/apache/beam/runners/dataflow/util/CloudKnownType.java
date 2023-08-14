@@ -20,13 +20,13 @@ package org.apache.beam.runners.dataflow.util;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** A utility for manipulating well-known cloud types. */
 @SuppressWarnings({
   "ImmutableEnumChecker",
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 enum CloudKnownType {
   TEXT("http://schema.org/Text", String.class) {

@@ -51,9 +51,9 @@ import org.apache.beam.sdk.values.Row;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.sdk.values.TypeDescriptors;
-import org.apache.beam.vendor.calcite.v1_28_0.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.calcite.v1_28_0.com.google.common.base.MoreObjects;
-import org.apache.beam.vendor.calcite.v1_28_0.com.google.common.collect.ImmutableSet;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.MoreObjects;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSet;
 import org.apache.commons.csv.CSVFormat;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -75,7 +75,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @AutoService(TableProvider.class)
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class TextTableProvider extends InMemoryMetaTableProvider {
 

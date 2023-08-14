@@ -17,10 +17,10 @@
  */
 package org.apache.beam.runners.dataflow.options;
 
+import com.google.api.services.dataflow.Dataflow;
 import java.util.List;
 import java.util.Map;
 import org.apache.beam.runners.dataflow.DataflowRunner;
-import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions;
 import org.apache.beam.sdk.io.FileSystems;
@@ -31,7 +31,6 @@ import org.apache.beam.sdk.options.ApplicationNameOptions;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.DefaultValueFactory;
 import org.apache.beam.sdk.options.Description;
-import org.apache.beam.sdk.options.Hidden;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.StreamingOptions;
 import org.apache.beam.sdk.options.Validation;
@@ -41,7 +40,7 @@ import org.slf4j.LoggerFactory;
 /** Options that can be used to configure the {@link DataflowRunner}. */
 @Description("Options that configure the Dataflow pipeline.")
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public interface DataflowPipelineOptions
     extends PipelineOptions,
@@ -52,7 +51,6 @@ public interface DataflowPipelineOptions
         BigQueryOptions,
         GcsOptions,
         StreamingOptions,
-        CloudDebuggerOptions,
         DataflowWorkerLoggingOptions,
         DataflowProfilingOptions,
         PubsubOptions {
@@ -120,8 +118,6 @@ public interface DataflowPipelineOptions
   void setDataflowServiceOptions(List<String> options);
 
   /** Run the job as a specific service account, instead of the default GCE robot. */
-  @Hidden
-  @Experimental
   @Description("Run the job as a specific service account, instead of the default GCE robot.")
   String getServiceAccount();
 
@@ -141,6 +137,25 @@ public interface DataflowPipelineOptions
 
   void setRegion(String region);
 
+  /**
+   * Dataflow endpoint to use.
+   *
+   * <p>Defaults to the current version of the Google Cloud Dataflow API, at the time the current
+   * SDK version was released.
+   *
+   * <p>If the string contains "://", then this is treated as a URL, otherwise {@link
+   * #getApiRootUrl()} is used as the root URL.
+   */
+  @Description(
+      "The URL for the Dataflow API. If the string contains \"://\", this"
+          + " will be treated as the entire URL, otherwise will be treated relative to apiRootUrl.")
+  @Override
+  @Default.String(Dataflow.DEFAULT_SERVICE_PATH)
+  String getDataflowEndpoint();
+
+  @Override
+  void setDataflowEndpoint(String value);
+
   /** Labels that will be applied to the billing records for this job. */
   @Description("Labels that will be applied to the billing records for this job.")
   Map<String, String> getLabels();
@@ -156,7 +171,7 @@ public interface DataflowPipelineOptions
   @Description("The customized dataflow worker jar")
   String getDataflowWorkerJar();
 
-  void setDataflowWorkerJar(String dataflowWorkerJar);
+  void setDataflowWorkerJar(String dataflowWorkerJafr);
 
   /** Set of available Flexible Resource Scheduling goals. */
   enum FlexResourceSchedulingGoal {

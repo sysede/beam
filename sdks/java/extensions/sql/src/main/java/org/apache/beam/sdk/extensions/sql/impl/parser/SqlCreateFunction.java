@@ -43,7 +43,7 @@ import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.sql.SqlUtil;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.sql.SqlWriter;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.util.Pair;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
 
 /** Parse tree for {@code CREATE FUNCTION} statement. */
 public class SqlCreateFunction extends SqlCreate implements BeamSqlParser.ExecutableStatement {
@@ -100,7 +100,7 @@ public class SqlCreateFunction extends SqlCreate implements BeamSqlParser.Execut
           RESOURCE.internal(String.format("Function %s is already defined.", lastName)));
     }
     JavaUdfLoader udfLoader = new JavaUdfLoader();
-    // TODO(BEAM-12355) Support qualified function names.
+    // TODO(https://github.com/apache/beam/issues/20834) Support qualified function names.
     List<String> functionPath = ImmutableList.of(lastName);
     if (!(jarPath instanceof SqlCharStringLiteral)) {
       throw SqlUtil.newContextException(

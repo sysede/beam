@@ -23,12 +23,16 @@ package org.apache.beam.examples;
 //     filter("Flourish|stomach").
 //   multifile: false
 //   pipeline_options: --output output.txt
-//   context_line: 86
+//   context_line: 180
 //   categories:
 //     - Debugging
 //     - Filtering
 //     - Options
 //     - Quickstart
+//   complexity: MEDIUM
+//   tags:
+//     - filter
+//     - strings
 
 import java.util.Arrays;
 import java.util.List;
@@ -80,7 +84,7 @@ import org.slf4j.LoggerFactory;
  * --runner=YOUR_SELECTED_RUNNER
  * }</pre>
  *
- * <p>The input file defaults to a public data set containing the text of of King Lear, by William
+ * <p>The input file defaults to a public data set containing the text of King Lear, by William
  * Shakespeare. You can override it and choose your own input with {@code --inputFile}.
  */
 public class DebuggingWordCount {

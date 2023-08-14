@@ -34,7 +34,7 @@ import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.rex.RexProgram;
 /** BeamRelNode to replace {@code Project} and {@code Filter} node. */
 @Internal
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public abstract class AbstractBeamCalcRel extends Calc implements BeamRelNode {
 
@@ -53,6 +53,16 @@ public abstract class AbstractBeamCalcRel extends Calc implements BeamRelNode {
     }
 
     throw new RuntimeException("Could not get the limit count from a non BeamSortRel input.");
+  }
+
+  @Override
+  public boolean deepEquals(Object obj) {
+    if (!super.deepEquals(obj) || !(obj instanceof AbstractBeamCalcRel)) {
+      return false;
+    }
+    // Beam cares about output field names
+    final AbstractBeamCalcRel other = (AbstractBeamCalcRel) obj;
+    return this.getRowType().getFieldNames().equals(other.getRowType().getFieldNames());
   }
 
   @Override

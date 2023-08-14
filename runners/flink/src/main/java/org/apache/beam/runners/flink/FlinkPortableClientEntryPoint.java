@@ -33,9 +33,9 @@ import org.apache.beam.runners.jobsubmission.JobInvocation;
 import org.apache.beam.runners.jobsubmission.JobInvoker;
 import org.apache.beam.runners.jobsubmission.PortablePipelineResult;
 import org.apache.beam.runners.jobsubmission.PortablePipelineRunner;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.ListeningExecutorService;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.flink.api.common.time.Deadline;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
  * protos offline. Allows the driver program to access actual execution environment and services, on
  * par with code executed by SDK workers.
  *
- * <p>The entry point starts the job server and provides the endpoint to the the driver program.
+ * <p>The entry point starts the job server and provides the endpoint to the driver program.
  *
  * <p>The external driver program constructs the Beam pipeline and submits it to the job service.
  *
@@ -68,7 +68,7 @@ import org.slf4j.LoggerFactory;
  * <p>Finally Flink launches the job.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class FlinkPortableClientEntryPoint {
   private static final Logger LOG = LoggerFactory.getLogger(FlinkPortableClientEntryPoint.class);

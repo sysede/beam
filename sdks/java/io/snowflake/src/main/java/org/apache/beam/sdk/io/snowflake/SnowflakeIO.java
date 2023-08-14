@@ -18,7 +18,7 @@
 package org.apache.beam.sdk.io.snowflake;
 
 import static org.apache.beam.sdk.io.TextIO.readFiles;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import com.google.auto.value.AutoValue;
 import com.opencsv.CSVParser;
@@ -39,7 +39,6 @@ import javax.sql.DataSource;
 import net.snowflake.client.jdbc.SnowflakeBasicDataSource;
 import net.snowflake.ingest.SimpleIngestManager;
 import net.snowflake.ingest.connection.HistoryResponse;
-import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
@@ -84,9 +83,9 @@ import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Joiner;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Splitter;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Joiner;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Splitter;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,11 +99,11 @@ import org.slf4j.LoggerFactory;
  * now only Google Cloud Storage is supported.
  *
  * <p>To configure SnowflakeIO to read/write from your Snowflake instance, you have to provide a
- * {@link DataSourceConfiguration} using {@link DataSourceConfiguration#create()}. Additionally, one
+ * {@link DataSourceConfiguration} using {@link DataSourceConfiguration#create()}. Additionally one
  * of {@link DataSourceConfiguration#withServerName(String)} or {@link
  * DataSourceConfiguration#withUrl(String)} must be used to tell SnowflakeIO which instance to use.
  * <br>
- * There are other options available to configure connection to Snowflake:
+ * There are also other options available to configure connection to Snowflake:
  *
  * <ul>
  *   <li>{@link DataSourceConfiguration#withWarehouse(String)} to specify which Warehouse to use
@@ -174,9 +173,8 @@ import org.slf4j.LoggerFactory;
  * <p><b>Important</b> When writing data to Snowflake, firstly data will be saved as CSV files on
  * specified stagingBucketName in directory named 'data' and then into Snowflake.
  */
-@Experimental
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class SnowflakeIO {
   private static final Logger LOG = LoggerFactory.getLogger(SnowflakeIO.class);
@@ -409,6 +407,7 @@ public class SnowflakeIO {
      *
      * @param quotationMark with possible single quote {@code '}, double quote {@code "} or nothing.
      *     Default value is single quotation {@code '}.
+     * @return
      */
     public Read<T> withQuotationMark(String quotationMark) {
       return toBuilder()
@@ -455,24 +454,18 @@ public class SnowflakeIO {
     }
 
     private void checkArguments() {
-      checkArgument(
-          getStorageIntegrationName() != null, "withStorageIntegrationName() is required");
-      checkArgument(isNotEmpty(getStorageIntegrationName()), "storage integration cannot be empty");
-      checkArgument(getStagingBucketName() != null, "withStagingBucketName() is required");
-      checkArgument(isNotEmpty(getStagingBucketName()), "staging bucket name cannot be empty");
-
       // Either table or query is required. If query is present, it's being used, table is used
       // otherwise
+
+      checkArgument(
+          getStorageIntegrationName() != null, "withStorageIntegrationName() is required");
+      checkArgument(getStagingBucketName() != null, "withStagingBucketName() is required");
+
       checkArgument(
           getQuery() != null || getTable() != null, "fromTable() or fromQuery() is required");
       checkArgument(
           !(getQuery() != null && getTable() != null),
           "fromTable() and fromQuery() are not allowed together");
-      checkArgument(isNotEmpty(getQuery()) || isNotEmpty(getTable()), "table or query is required");
-      checkArgument(
-          !(isNotEmpty(getQuery()) && isNotEmpty(getTable())),
-          "table and query are not allowed together");
-
       checkArgument(getCsvMapper() != null, "withCsvMapper() is required");
       checkArgument(getCoder() != null, "withCoder() is required");
       checkArgument(
@@ -835,6 +828,7 @@ public class SnowflakeIO {
      * during streaming.
      *
      * @param triggeringFrequency time for triggering frequency in {@link Duration} type.
+     * @return
      */
     public Write<T> withFlushTimeLimit(Duration triggeringFrequency) {
       return toBuilder().setFlushTimeLimit(triggeringFrequency).build();
@@ -870,6 +864,7 @@ public class SnowflakeIO {
      * }</pre>
      *
      * @param snowPipe name of created SnowPipe in Snowflake dashboard.
+     * @return
      */
     public Write<T> withSnowPipe(String snowPipe) {
       return toBuilder().setSnowPipe(ValueProvider.StaticValueProvider.of(snowPipe)).build();
@@ -879,6 +874,7 @@ public class SnowflakeIO {
      * Same as {@code withSnowPipe(String}, but with a {@link ValueProvider}.
      *
      * @param snowPipe name of created SnowPipe in Snowflake dashboard.
+     * @return
      */
     public Write<T> withSnowPipe(ValueProvider<String> snowPipe) {
       return toBuilder().setSnowPipe(snowPipe).build();
@@ -888,6 +884,7 @@ public class SnowflakeIO {
      * Number of shards that are created per window.
      *
      * @param shardsNumber defined number of shards or 1 by default.
+     * @return
      */
     public Write<T> withShardsNumber(Integer shardsNumber) {
       return toBuilder().setShardsNumber(shardsNumber).build();
@@ -900,6 +897,7 @@ public class SnowflakeIO {
      * triggeringFrequency)}
      *
      * @param rowsCount Number of rows that will be in one file staged for loading. Default: 10000.
+     * @return
      */
     public Write<T> withFlushRowLimit(Integer rowsCount) {
       return toBuilder().setFlushRowLimit(rowsCount).build();
@@ -947,6 +945,7 @@ public class SnowflakeIO {
      *
      * @param quotationMark with possible single quote {@code '}, double quote {@code "} or nothing.
      *     Default value is single quotation {@code '}.
+     * @return
      */
     public Write<T> withQuotationMark(String quotationMark) {
       return toBuilder().setQuotationMark(quotationMark).build();
@@ -959,6 +958,7 @@ public class SnowflakeIO {
      * report REST API.</a>
      *
      * @param debugLevel error or info debug level from enum {@link StreamingLogLevel}
+     * @return
      */
     public Write<T> withDebugMode(StreamingLogLevel debugLevel) {
       return toBuilder().setDebugMode(debugLevel).build();
@@ -981,7 +981,6 @@ public class SnowflakeIO {
 
     private void checkArguments(PCollection<T> input) {
       checkArgument(getStagingBucketName() != null, "withStagingBucketName is required");
-      checkArgument(isNotEmpty(getStagingBucketName()), "staging bucket name can not be empty");
 
       checkArgument(getUserDataMapper() != null, "withUserDataMapper() is required");
 
@@ -993,12 +992,10 @@ public class SnowflakeIO {
         checkArgument(
             getSnowPipe() != null,
             "in streaming (unbounded) write it is required to specify SnowPipe name via withSnowPipe() method.");
-        checkArgument(isNotEmpty(getSnowPipe()), "snowpipe name cannot be empty");
       } else {
         checkArgument(
             getTable() != null,
             "in batch writing it is required to specify destination table name via to() method.");
-        checkArgument(isNotEmpty(getTable()), "table cannot be empty");
       }
     }
 
@@ -1675,7 +1672,7 @@ public class SnowflakeIO {
 
     /**
      * Sets URL of Snowflake server in following format:
-     * jdbc:snowflake://<account_identifier>.snowflakecomputing.com
+     * jdbc:snowflake://<account_name>.snowflakecomputing.com
      *
      * <p>Either withUrl or withServerName is required.
      *
@@ -1684,10 +1681,10 @@ public class SnowflakeIO {
     public DataSourceConfiguration withUrl(String url) {
       checkArgument(
           url.startsWith("jdbc:snowflake://"),
-          "url must have format: jdbc:snowflake://<account_identifier>.snowflakecomputing.com");
+          "url must have format: jdbc:snowflake://<account_name>.snowflakecomputing.com");
       checkArgument(
           url.endsWith("snowflakecomputing.com"),
-          "url must have format: jdbc:snowflake://<account_identifier>.snowflakecomputing.com");
+          "url must have format: jdbc:snowflake://<account_name>.snowflakecomputing.com");
       return builder().setUrl(url).build();
     }
 
@@ -1737,7 +1734,7 @@ public class SnowflakeIO {
 
     /**
      * Sets the name of the Snowflake server. Following format is required:
-     * <account_identifier>.snowflakecomputing.com
+     * <account_name>.snowflakecomputing.com
      *
      * <p>Either withServerName or withUrl is required.
      *
@@ -1746,7 +1743,7 @@ public class SnowflakeIO {
     public DataSourceConfiguration withServerName(String serverName) {
       checkArgument(
           serverName.endsWith("snowflakecomputing.com"),
-          "serverName must be in format <account_identifier>.snowflakecomputing.com");
+          "serverName must be in format <account_name>.snowflakecomputing.com");
       return withServerName(ValueProvider.StaticValueProvider.of(serverName));
     }
 
@@ -1842,11 +1839,7 @@ public class SnowflakeIO {
           basicDataSource.setSchema(getSchema().get());
         }
         if (isNotEmpty(getServerName())) {
-          String serverName = getServerName().get();
-          checkArgument(
-              serverName.endsWith("snowflakecomputing.com"),
-              "serverName must be in format <account_identifier>.snowflakecomputing.com");
-          basicDataSource.setServerName(serverName);
+          basicDataSource.setServerName(getServerName().get());
         }
         if (getPortNumber() != null) {
           basicDataSource.setPortNumber(getPortNumber());
@@ -1874,11 +1867,9 @@ public class SnowflakeIO {
 
       if (getUrl() != null) {
         url.append(getUrl());
-      } else if (getServerName() != null) {
+      } else {
         url.append("jdbc:snowflake://");
         url.append(getServerName().get());
-      } else {
-        throw new RuntimeException("Server name or URL is required");
       }
       if (getPortNumber() != null) {
         url.append(":").append(getPortNumber());
@@ -1905,7 +1896,7 @@ public class SnowflakeIO {
 
     @Override
     public DataSource apply(Void input) {
-      return instances.computeIfAbsent(config, DataSourceConfiguration::buildDatasource);
+      return instances.computeIfAbsent(config, (config) -> config.buildDatasource());
     }
 
     @Override

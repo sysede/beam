@@ -23,11 +23,14 @@ PrecommitJobBuilder builder = new PrecommitJobBuilder(
     nameBase: 'SQL',
     gradleTask: ':sqlPreCommit',
     gradleSwitches: [
-      '-PdisableSpotlessCheck=true'
+      '-PdisableSpotlessCheck=true',
+      '-PdisableCheckStyle=true',
+      '-PenableJacocoReport'
     ], // spotless checked in job_PreCommit_Spotless
     triggerPathPatterns: [
       '^sdks/java/extensions/sql.*$',
-    ]
+    ],
+    numBuildsToRetain: 40
     )
 builder.build {
   publishers {
@@ -35,10 +38,6 @@ builder.build {
     recordIssues {
       tools {
         errorProne()
-        java()
-        checkStyle {
-          pattern('**/build/reports/checkstyle/*.xml')
-        }
         spotBugs {
           pattern('**/build/reports/spotbugs/*.xml')
         }
@@ -47,6 +46,8 @@ builder.build {
     }
     jacocoCodeCoverage {
       execPattern('**/build/jacoco/*.exec')
+      exclusionPattern('**/AutoValue_*')
+      inclusionPattern("**/org/apache/beam/sdk/extensions/sql/**")
     }
   }
 }

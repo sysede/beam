@@ -22,8 +22,7 @@ import java.io.Serializable;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Objects;
-import org.apache.beam.sdk.annotations.Experimental;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.math.DoubleMath;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.math.DoubleMath;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,17 +32,14 @@ import org.slf4j.LoggerFactory;
  *
  * <p>We may consider using Apache Commons or HdrHistogram library in the future for advanced
  * features such as sparsely populated histograms.
- *
- * <p>This class is considered experimental and may break or receive backwards-incompatible changes
- * in future versions of the Apache Beam SDK.
  */
-@Experimental
 public class HistogramData implements Serializable {
   private static final Logger LOG = LoggerFactory.getLogger(HistogramData.class);
 
   private final BucketType bucketType;
 
-  // TODO(BEAM-12103): Update this function to remove the numTopRecords and numBottomRecords
+  // TODO(https://github.com/apache/beam/issues/20853): Update this function to remove the
+  // numTopRecords and numBottomRecords
   // and include those counters in the buckets array.
   private long[] buckets;
   private long numBoundedBucketRecords;
@@ -68,8 +64,8 @@ public class HistogramData implements Serializable {
   }
 
   /**
-   * TODO(BEAM-12103): Update this function to define numBuckets total, including the infinite
-   * buckets. Create a histogram with linear buckets.
+   * TODO(https://github.com/apache/beam/issues/20853): Update this function to define numBuckets
+   * total, including the infinite buckets. Create a histogram with linear buckets.
    *
    * @param start Lower bound of a starting bucket.
    * @param width Bucket width. Smaller width implies a better resolution for percentile estimation.
@@ -103,7 +99,8 @@ public class HistogramData implements Serializable {
     }
   }
 
-  // TODO(BEAM-12103): Update this function to allow incrementing the infinite buckets as well.
+  // TODO(https://github.com/apache/beam/issues/20853): Update this function to allow incrementing
+  // the infinite buckets as well.
   // and remove the incTopBucketCount and incBotBucketCount methods.
   // Using 0 and length -1 as the bucketIndex.
   public synchronized void incBucketCount(int bucketIndex, long count) {
@@ -150,8 +147,8 @@ public class HistogramData implements Serializable {
   }
 
   /**
-   * TODO(BEAM-12103): Update this function to allow indexing the -INF and INF bucket (using 0 and
-   * length -1) Get the bucket count for the given bucketIndex.
+   * TODO(https://github.com/apache/beam/issues/20853): Update this function to allow indexing the
+   * -INF and INF bucket (using 0 and length -1) Get the bucket count for the given bucketIndex.
    *
    * <p>This method does not guarantee the atomicity when sequentially accessing the multiple
    * buckets i.e. other threads may alter the value between consecutive invocations. For summing the

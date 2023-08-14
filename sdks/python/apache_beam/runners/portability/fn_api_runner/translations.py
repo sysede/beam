@@ -247,11 +247,7 @@ class Stage(object):
   def side_inputs(self):
     # type: () -> Iterator[str]
     for transform in self.transforms:
-      if transform.spec.urn in PAR_DO_URNS:
-        payload = proto_utils.parse_Bytes(
-            transform.spec.payload, beam_runner_api_pb2.ParDoPayload)
-        for side_input in payload.side_inputs:
-          yield transform.inputs[side_input]
+      yield from side_inputs(transform).values()
 
   def has_as_main_input(self, pcoll):
     for transform in self.transforms:
@@ -260,7 +256,7 @@ class Stage(object):
             transform.spec.payload, beam_runner_api_pb2.ParDoPayload)
         local_side_inputs = payload.side_inputs
       else:
-        local_side_inputs = {}
+        local_side_inputs = {}  # type: ignore[assignment]
       for local_id, pipeline_id in transform.inputs.items():
         if pcoll == pipeline_id and local_id not in local_side_inputs:
           return True
@@ -1111,9 +1107,9 @@ def pack_per_key_combiners(stages, context, can_pack=lambda s: True):
             is_bounded=input_pcoll.is_bounded))
 
     # Set up Pack stage.
-    # TODO(BEAM-7746): classes that inherit from RunnerApiFn are expected to
-    #  accept a PipelineContext for from_runner_api/to_runner_api.  Determine
-    #  how to accomodate this.
+    # TODO(https://github.com/apache/beam/issues/19737): classes that inherit
+    #  from RunnerApiFn are expected to accept a PipelineContext for
+    #  from_runner_api/to_runner_api.  Determine how to accomodate this.
     pack_combine_fn = combiners.SingleInputTupleCombineFn(
         *[
             core.CombineFn.from_runner_api(combine_payload.combine_fn, context)  # type: ignore[arg-type]
@@ -2052,6 +2048,16 @@ def union(a, b):
 
 
 _global_counter = 0
+
+
+def side_inputs(transform):
+  result = {}
+  if transform.spec.urn in PAR_DO_URNS:
+    payload = proto_utils.parse_Bytes(
+        transform.spec.payload, beam_runner_api_pb2.ParDoPayload)
+    for side_input in payload.side_inputs:
+      result[side_input] = transform.inputs[side_input]
+  return result
 
 
 def unique_name(existing, prefix):

@@ -22,7 +22,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiException;
-import com.google.cloud.pubsublite.Message;
 import com.google.cloud.pubsublite.MessageMetadata;
 import com.google.cloud.pubsublite.internal.CheckedApiException;
 import com.google.cloud.pubsublite.internal.Publisher;
@@ -35,7 +34,7 @@ import org.apache.beam.sdk.transforms.DoFn;
 
 /** A sink which publishes messages to Pub/Sub Lite. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class PubsubLiteSink extends DoFn<PubSubMessage, Void> {
   private final PublisherOptions options;
@@ -59,7 +58,7 @@ public class PubsubLiteSink extends DoFn<PubSubMessage, Void> {
     }
 
     void publish(PubSubMessage message) {
-      futures.add(publisher.publish(Message.fromProto(message)));
+      futures.add(publisher.publish(message));
     }
 
     void waitForDone() throws Exception {

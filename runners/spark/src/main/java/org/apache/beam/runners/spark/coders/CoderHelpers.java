@@ -17,7 +17,7 @@
  */
 package org.apache.beam.runners.spark.coders;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayInputStream;
@@ -39,7 +39,7 @@ import scala.Tuple2;
 
 /** Serialization utility class. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public final class CoderHelpers {
   private CoderHelpers() {}
@@ -201,7 +201,7 @@ public final class CoderHelpers {
    */
   public static class FromByteFunction<K, V>
       implements PairFunction<Tuple2<ByteArray, byte[]>, K, V>,
-          org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Function<
+          org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Function<
               Tuple2<ByteArray, byte[]>, Tuple2<K, V>> {
     private final Coder<K> keyCoder;
     private final Coder<V> valueCoder;

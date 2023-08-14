@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.transforms.PTransform;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -57,9 +57,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * Map<String, PCollection<Row>> allPcs = pcs.getAll();
  * }</pre>
  */
-@SuppressWarnings({
-  "rawtypes" // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
-})
 public class PCollectionRowTuple implements PInput, POutput {
   /**
    * Returns an empty {@link PCollectionRowTuple} that is part of the given {@link Pipeline}.

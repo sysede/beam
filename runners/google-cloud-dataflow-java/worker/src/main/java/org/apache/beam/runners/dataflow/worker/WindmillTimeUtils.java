@@ -18,7 +18,7 @@
 package org.apache.beam.runners.dataflow.worker;
 
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 
@@ -45,6 +45,9 @@ public class WindmillTimeUtils {
     // Windmill should never send us an unknown timestamp.
     Preconditions.checkArgument(timestampUs != Long.MIN_VALUE);
     Instant result = new Instant(divideAndRoundDown(timestampUs, 1000));
+    if (result.isBefore(BoundedWindow.TIMESTAMP_MIN_VALUE)) {
+      return BoundedWindow.TIMESTAMP_MIN_VALUE;
+    }
     if (result.isAfter(BoundedWindow.TIMESTAMP_MAX_VALUE)) {
       // End of time.
       return BoundedWindow.TIMESTAMP_MAX_VALUE;

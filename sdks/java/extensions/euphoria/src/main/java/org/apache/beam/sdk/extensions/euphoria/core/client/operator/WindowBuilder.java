@@ -18,7 +18,7 @@
 package org.apache.beam.sdk.extensions.euphoria.core.client.operator;
 
 import static java.util.Objects.requireNonNull;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import java.util.Optional;
 import org.apache.beam.sdk.extensions.euphoria.core.client.operator.base.Builders;
@@ -37,7 +37,7 @@ import org.joda.time.Duration;
  * @param <T> type of windowed element
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 class WindowBuilder<T>
     implements Builders.WindowBy<WindowBuilder<T>>,

@@ -22,9 +22,13 @@ package org.apache.beam.learning.katas.commontransforms.withkeys;
 //   name: WithKeys
 //   description: Task from katas to convert each fruit name into a KV of its first letter and itself.
 //   multifile: false
-//   context_line: 40
+//   context_line: 46
 //   categories:
 //     - Combiners
+//   complexity: BASIC
+//   tags:
+//     - transforms
+//     - strings
 
 import static org.apache.beam.sdk.values.TypeDescriptors.strings;
 
@@ -44,8 +48,7 @@ public class Task {
     Pipeline pipeline = Pipeline.create(options);
 
     PCollection<String> words =
-        pipeline.apply(
-            Create.of("apple", "banana", "cherry", "durian", "guava", "melon"));
+        pipeline.apply(Create.of("apple", "banana", "cherry", "durian", "guava", "melon"));
 
     PCollection<KV<String, String>> output = applyTransform(words);
 

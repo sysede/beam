@@ -17,8 +17,8 @@
  */
 package org.apache.beam.runners.dataflow.util;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
@@ -52,12 +52,12 @@ import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.util.FluentBackoff;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.sdk.util.MoreFutures;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.HashCode;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.ByteSource;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.MoreExecutors;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.HashCode;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.ByteSource;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.Files;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.util.concurrent.MoreExecutors;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
@@ -67,7 +67,7 @@ import org.slf4j.LoggerFactory;
 
 /** Helper routines for packages. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class PackageUtil implements Closeable {
 
@@ -149,11 +149,6 @@ public class PackageUtil implements Closeable {
     String sourceDescription = attributes.getSourceDescription();
     String target = attributes.getDestination().getLocation();
 
-    if (alreadyStaged(attributes)) {
-      LOG.debug("Skipping file already staged: {} at {}", sourceDescription, target);
-      return StagingResult.cached(attributes);
-    }
-
     try {
       return tryStagePackageWithRetry(attributes, retrySleeper, createOptions);
     } catch (Exception miscException) {
@@ -170,6 +165,11 @@ public class PackageUtil implements Closeable {
     BackOff backoff = BackOffAdapter.toGcpBackOff(BACKOFF_FACTORY.backoff());
 
     while (true) {
+      if (alreadyStaged(attributes)) {
+        LOG.debug("Skipping file already staged: {} at {}", sourceDescription, target);
+        return StagingResult.cached(attributes);
+      }
+
       try {
         return tryStagePackage(attributes, createOptions);
       } catch (IOException ioException) {

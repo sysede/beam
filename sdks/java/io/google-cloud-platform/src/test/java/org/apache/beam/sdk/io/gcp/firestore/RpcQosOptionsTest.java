@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.io.gcp.firestore;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists.newArrayList;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -39,7 +39,7 @@ import org.junit.runners.model.MultipleFailureException;
 import org.mockito.ArgumentCaptor;
 
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public final class RpcQosOptionsTest {
 

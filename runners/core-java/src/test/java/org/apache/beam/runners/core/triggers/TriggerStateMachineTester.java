@@ -17,8 +17,8 @@
  */
 package org.apache.beam.runners.core.triggers;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -50,8 +50,8 @@ import org.apache.beam.sdk.transforms.windowing.WindowFn;
 import org.apache.beam.sdk.util.WindowTracing;
 import org.apache.beam.sdk.util.WindowedValue;
 import org.apache.beam.sdk.values.TimestampedValue;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Maps;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Maps;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
@@ -204,7 +204,7 @@ public class TriggerStateMachineTester<InputT, W extends BoundedWindow> {
   public void advanceInputWatermark(Instant newInputWatermark) throws Exception {
     timerInternals.advanceInputWatermark(newInputWatermark);
     while (timerInternals.removeNextEventTimer() != null) {
-      // TODO: Should test timer firings: see https://issues.apache.org/jira/browse/BEAM-694
+      // TODO: Should test timer firings: see https://github.com/apache/beam/issues/18084
     }
   }
 
@@ -212,11 +212,11 @@ public class TriggerStateMachineTester<InputT, W extends BoundedWindow> {
   public void advanceProcessingTime(Instant newProcessingTime) throws Exception {
     timerInternals.advanceProcessingTime(newProcessingTime);
     while (timerInternals.removeNextProcessingTimer() != null) {
-      // TODO: Should test timer firings: see https://issues.apache.org/jira/browse/BEAM-694
+      // TODO: Should test timer firings: see https://github.com/apache/beam/issues/18084
     }
     timerInternals.advanceSynchronizedProcessingTime(newProcessingTime);
     while (timerInternals.removeNextSynchronizedProcessingTimer() != null) {
-      // TODO: Should test timer firings: see https://issues.apache.org/jira/browse/BEAM-694
+      // TODO: Should test timer firings: see https://github.com/apache/beam/issues/18084
     }
   }
 

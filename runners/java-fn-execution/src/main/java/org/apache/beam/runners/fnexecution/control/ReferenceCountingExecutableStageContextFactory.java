@@ -31,9 +31,9 @@ import org.apache.beam.sdk.function.ThrowingFunction;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PortablePipelineOptions;
 import org.apache.beam.sdk.transforms.SerializableFunction;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * keeping.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class ReferenceCountingExecutableStageContextFactory
     implements ExecutableStageContext.Factory {
@@ -158,7 +158,12 @@ public class ReferenceCountingExecutableStageContextFactory
     synchronized (this) {
       if (executor == null) {
         executor =
-            Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
+            Executors.newScheduledThreadPool(
+                1,
+                new ThreadFactoryBuilder()
+                    .setNameFormat("ScheduledExecutor-thread")
+                    .setDaemon(true)
+                    .build());
       }
       return executor;
     }

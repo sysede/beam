@@ -17,7 +17,7 @@
  */
 package org.apache.beam.fn.harness.state;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import org.apache.beam.fn.harness.Cache;
 import org.apache.beam.model.fnexecution.v1.BeamFnApi.StateKey;
@@ -29,7 +29,7 @@ import org.apache.beam.sdk.transforms.Materializations.IterableView;
  * An implementation of a iterable side input that utilizes the Beam Fn State API to fetch values.
  */
 @SuppressWarnings({
-  "rawtypes" // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes" // TODO(https://github.com/apache/beam/issues/20447)
 })
 public class IterableSideInput<T> implements IterableView<T> {
 

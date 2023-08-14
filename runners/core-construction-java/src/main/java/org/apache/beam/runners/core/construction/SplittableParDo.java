@@ -17,7 +17,7 @@
  */
 package org.apache.beam.runners.core.construction;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import com.google.auto.service.AutoService;
 import java.io.IOException;
@@ -75,9 +75,9 @@ import org.apache.beam.sdk.values.PValue;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.sdk.values.WindowingStrategy;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Maps;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Maps;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 
@@ -99,7 +99,7 @@ import org.joda.time.Instant;
  * ParDo.of(splittable DoFn)}, but not for direct use by pipeline writers.
  */
 @SuppressWarnings({
-  "rawtypes" // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes" // TODO(https://github.com/apache/beam/issues/20447)
 })
 public class SplittableParDo<InputT, OutputT, RestrictionT, WatermarkEstimatorStateT>
     extends PTransform<PCollection<InputT>, PCollectionTuple> {
@@ -691,10 +691,13 @@ public class SplittableParDo<InputT, OutputT, RestrictionT, WatermarkEstimatorSt
    * PrimitiveBoundedRead} and {@link PrimitiveUnboundedRead} if either the experiment {@code
    * use_deprecated_read} or {@code beam_fn_api_use_deprecated_read} are specified.
    *
-   * <p>TODO(BEAM-10670): Remove the primitive Read and make the splittable DoFn the only option.
+   * <p>TODO(https://github.com/apache/beam/issues/20530): Remove the primitive Read and make the
+   * splittable DoFn the only option.
    */
   public static void convertReadBasedSplittableDoFnsToPrimitiveReadsIfNecessary(Pipeline pipeline) {
-    if (!ExperimentalOptions.hasExperiment(pipeline.getOptions(), "use_sdf_read")
+    if (!(ExperimentalOptions.hasExperiment(pipeline.getOptions(), "use_sdf_read")
+            || ExperimentalOptions.hasExperiment(
+                pipeline.getOptions(), "use_unbounded_sdf_wrapper"))
         || ExperimentalOptions.hasExperiment(
             pipeline.getOptions(), "beam_fn_api_use_deprecated_read")
         || ExperimentalOptions.hasExperiment(pipeline.getOptions(), "use_deprecated_read")) {
@@ -706,7 +709,8 @@ public class SplittableParDo<InputT, OutputT, RestrictionT, WatermarkEstimatorSt
    * Converts {@link Read} based Splittable DoFn expansions to primitive reads implemented by {@link
    * PrimitiveBoundedRead} and {@link PrimitiveUnboundedRead}.
    *
-   * <p>TODO(BEAM-10670): Remove the primitive Read and make the splittable DoFn the only option.
+   * <p>TODO(https://github.com/apache/beam/issues/20530): Remove the primitive Read and make the
+   * splittable DoFn the only option.
    */
   public static void convertReadBasedSplittableDoFnsToPrimitiveReads(Pipeline pipeline) {
     pipeline.replaceAll(

@@ -63,8 +63,8 @@ import org.apache.avro.util.ClassUtils;
 import org.apache.avro.util.Utf8;
 import org.apache.beam.sdk.util.EmptyOnDeserializationThreadLocal;
 import org.apache.beam.sdk.values.TypeDescriptor;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Suppliers;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Supplier;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Suppliers;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -107,10 +107,15 @@ import org.joda.time.DateTimeZone;
  * org.apache.beam.sdk.transforms.GroupByKey} operations.
  *
  * @param <T> the type of elements handled by this coder
+ * @deprecated Avro related classes are deprecated in module <code>beam-sdks-java-core</code> and
+ *     will be eventually removed. Please, migrate to a new module <code>
+ *     beam-sdks-java-extensions-avro</code> by importing <code>
+ *     org.apache.beam.sdk.extensions.avro.coders.AvroCoder</code> instead of this one.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
+@Deprecated
 public class AvroCoder<T> extends CustomCoder<T> {
 
   /**
@@ -490,7 +495,7 @@ public class AvroCoder<T> extends CustomCoder<T> {
         return;
       }
 
-      // If the the record isn't a true class, but rather a GenericRecord, SpecificRecord, etc.
+      // If the record isn't a true class, but rather a GenericRecord, SpecificRecord, etc.
       // with a specified schema, then we need to make the decision based on the generated
       // implementations.
       if (isSubtypeOf(type, IndexedRecord.class)) {

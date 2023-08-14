@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.io.aws2.kinesis;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -31,7 +31,7 @@ import software.amazon.kinesis.common.InitialPositionInStream;
  * case the reader will start reading at the specified point in time.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 class StartingPoint implements Serializable {
 

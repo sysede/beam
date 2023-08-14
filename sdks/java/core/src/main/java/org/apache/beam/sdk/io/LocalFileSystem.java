@@ -17,8 +17,8 @@
  */
 package org.apache.beam.sdk.io;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files.fileTraverser;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.Files.fileTraverser;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -48,10 +48,10 @@ import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.MoveOptions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Predicates;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Predicates;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +82,7 @@ import org.slf4j.LoggerFactory;
  * </ul>
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 class LocalFileSystem extends FileSystem<LocalResourceId> {
 
@@ -284,13 +284,14 @@ class LocalFileSystem extends FileSystem<LocalResourceId> {
     final PathMatcher matcher =
         java.nio.file.FileSystems.getDefault().getPathMatcher("glob:" + pathToMatch);
 
-    // TODO: Avoid iterating all files: https://issues.apache.org/jira/browse/BEAM-1309
+    // TODO: Avoid iterating all files: https://github.com/apache/beam/issues/18193
     Iterable<File> files = fileTraverser().depthFirstPreOrder(parent);
     Iterable<File> matchedFiles =
         StreamSupport.stream(files.spliterator(), false)
             .filter(
                 Predicates.and(
-                        org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files.isFile(),
+                        org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.Files
+                            .isFile(),
                         input -> matcher.matches(input.toPath()))
                     ::apply)
             .collect(Collectors.toList());

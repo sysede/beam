@@ -21,12 +21,12 @@ import com.google.auto.value.AutoValue;
 import java.io.Serializable;
 import java.util.Collections;
 import org.apache.beam.sdk.metrics.MetricKey;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
 
 /** Representation of multiple metric updates. */
 @AutoValue
 @SuppressWarnings({
-  "rawtypes" // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes" // TODO(https://github.com/apache/beam/issues/20447)
 })
 public abstract class MetricUpdates {
 

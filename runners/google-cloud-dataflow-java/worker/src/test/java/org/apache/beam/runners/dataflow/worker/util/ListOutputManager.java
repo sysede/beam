@@ -23,8 +23,8 @@ import java.util.Map;
 import org.apache.beam.runners.core.DoFnRunners.OutputManager;
 import org.apache.beam.sdk.util.WindowedValue;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Maps;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Maps;
 
 /**
  * An implementation of {@code OutputManager} using simple lists, for testing and in-memory contexts
@@ -37,7 +37,7 @@ public class ListOutputManager implements OutputManager {
   @Override
   public <T> void output(TupleTag<T> tag, WindowedValue<T> output) {
     @SuppressWarnings({
-      "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+      "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
       "unchecked"
     })
     List<WindowedValue<T>> outputList = (List) outputLists.get(tag);
@@ -45,7 +45,7 @@ public class ListOutputManager implements OutputManager {
     if (outputList == null) {
       outputList = Lists.newArrayList();
       @SuppressWarnings({
-        "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+        "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
         "unchecked"
       })
       List<WindowedValue<?>> untypedList = (List) outputList;
@@ -58,7 +58,7 @@ public class ListOutputManager implements OutputManager {
   public <T> List<WindowedValue<T>> getOutput(TupleTag<T> tag) {
     // Safe cast by design, inexpressible in Java without rawtypes
     @SuppressWarnings({
-      "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+      "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
       "unchecked"
     })
     List<WindowedValue<T>> outputList = (List) outputLists.get(tag);

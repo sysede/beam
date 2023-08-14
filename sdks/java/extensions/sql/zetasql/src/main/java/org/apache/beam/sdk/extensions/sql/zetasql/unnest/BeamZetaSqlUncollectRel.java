@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.extensions.sql.zetasql.unnest;
 
-import static org.apache.beam.vendor.calcite.v1_28_0.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import org.apache.beam.sdk.extensions.sql.impl.planner.BeamCostModel;
 import org.apache.beam.sdk.extensions.sql.impl.planner.BeamRelMetadataQuery;
@@ -47,7 +47,7 @@ import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.rel.RelNode;
  * https://issues.apache.org/jira/browse/BEAM-10896.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class BeamZetaSqlUncollectRel extends ZetaSqlUnnest implements BeamRelNode {
 

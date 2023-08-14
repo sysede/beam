@@ -24,8 +24,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.NotThreadSafe;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,11 +39,11 @@ import org.slf4j.LoggerFactory;
  * interval between two consecutive updates is also bound by {@link #getMinReportingInterval} and
  * {@link #getMaxReportingInterval}.
  */
-// Very likely real potential for bugs - https://issues.apache.org/jira/browse/BEAM-6561
+// Very likely real potential for bugs - https://github.com/apache/beam/issues/19274
 @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
 @NotThreadSafe
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public abstract class WorkProgressUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(WorkProgressUpdater.class);

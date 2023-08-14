@@ -40,7 +40,8 @@ Everyone is welcome to join and contribute to the project in multiple ways, not 
 
 Here’s a list of things you can do to get started contributing:
 
-<table class="table table-bordered">
+<div class="table-container-wrapper">
+  <table class="table-contribute">
   <tr>
     <th>Contribution</th>
     <th>How to do it</th>
@@ -48,19 +49,18 @@ Here’s a list of things you can do to get started contributing:
   <tr>
     <td>Participate and share ideas</td>
     <td class="list-text-size-md">
-      <ol>
-        <li>Start by <a href="https://beam.apache.org/contribute/#accounts-and-permissions">getting an Apache Beam Jira account</a>.</li>
-        <li>Subscribe to our <a href="https://beam.apache.org/community/contact-us/">mailing lists</a> (<a href="mailto:dev@beam.apache.org">dev@beam.apache.org</a> and <a href="mailto:dev@beam.apache.org">user@beam.apache.org</a>).</li>
-        <li>Stay in the loop of our <a href="https://issues.apache.org/jira/projects/BEAM/issues">Jira product backlog</a>, participate in discussions to brainstorm solutions, and help the community solve their mailing list questions.</li>
-      </ol>
+      <ul>
+        <li>Subscribe to our <a href="/community/contact-us/">mailing lists</a> (<a href="mailto:dev@beam.apache.org">dev@beam.apache.org</a> and <a href="mailto:dev@beam.apache.org">user@beam.apache.org</a>).</li>
+        <li>Stay in the loop of our <a href="https://github.com/apache/beam/issues">Issues product backlog</a>, participate in discussions to brainstorm solutions, and help the community solve their mailing list questions.</li>
+      </ul>
     </td>
   </tr>
   <tr>
     <td>File a bug</td>
     <td class="list-text-size-md">
       <ol class="no-bullet">
-        <li>Create a Jira ticket and mark it as a bug</li>
-        <br><span>OR</span><br><br>
+        <li>Create a <a href="https://github.com/apache/beam/issues">GitHub issue</a> and mark it as a bug</li>
+        <br><span class="text--active">OR</span><br><br>
         <li>Send an email to <a href="mailto:dev@beam.apache.org">dev@beam.apache.org</a> with subject: [Bug] &lt;bug summary&gt; and include as much detail as possible.</li>
       </ol>
     </td>
@@ -69,10 +69,20 @@ Here’s a list of things you can do to get started contributing:
     <td>Propose a feature</td>
     <td class="list-text-size-md">
       <ol class="no-bullet">
-        <li>Create a Jira ticket and mark it as a feature request</li>
-        <br><span>OR</span><br><br>
+        <li>Create a <a href="https://github.com/apache/beam/issues">GitHub issue</a> and mark it as a feature request</li>
+        <br><span class="text--active">OR</span><br><br>
         <li>Send an email to <a href="mailto:dev@beam.apache.org">dev@beam.apache.org</a> with subject: [Feature Proposal] &lt;your idea&gt;.</li>
       </ol>
+    </td>
+  </tr>
+  <tr>
+    <td>Fix an open issue</td>
+    <td class="list-text-size-md">
+      <ul>
+        <li>Comment “.take-issue” on the <a href="https://github.com/apache/beam/issues">issue you'd like to work on</a>. This will cause the issue to be assigned to you.</li>
+        <li>If appropriate, make your change and open a <a href=https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork>Pull Request</a>.</li>
+        <li>Comment “.close-issue” to close the issue once all work has been completed.</li>
+      </ul>
     </td>
   </tr>
   <tr>
@@ -85,8 +95,8 @@ Here’s a list of things you can do to get started contributing:
     <td>Improve the website</td>
     <td class="list-text-size-md">
       <ul>
-        <li>Follow the website <a href="https://beam.apache.org/contribute/get-started-contributing/">Contribution Guide</a> to make changes yourself.</li>
-        <li>Check our <a href="https://issues.apache.org/jira/browse/BEAM-13229?jql=project%20%3D%20BEAM%20AND%20resolution%20%3D%20Unresolved%20AND%20labels%20%3D%20website%20ORDER%20BY%20priority%20DESC%2C%20updated%20DESC">Website Backlog</a> in Jira to find rooms for improvement, or propose one.</li>
+        <li>Follow the website <a href="https://github.com/apache/beam/blob/master/CONTRIBUTING.md">Contribution Guide</a> to make changes yourself.</li>
+        <li>Check our <a href="https://github.com/apache/beam/issues?q=is%3Aopen+is%3Aissue+label%3Awebsite">Website Backlog</a> in GitHub to find rooms for improvement, or propose one.</li>
       </ul>
     </td>
   </tr>
@@ -99,7 +109,7 @@ Here’s a list of things you can do to get started contributing:
   <tr>
     <td>Share your success story</td>
     <td>
-      Visit our <a href="https://beam.apache.org/case-studies/">Case Studies</a> page and share your story or add your company’s logo.
+      Visit our <a href="/case-studies/">Case Studies</a> page and share your story or add your company’s logo.
     </td>
   </tr>
   <tr>
@@ -118,26 +128,26 @@ Here’s a list of things you can do to get started contributing:
     <td>Build a new feature like a new IO connector or PTransform</td>
     <td class="list-text-size-md">
       <ul>
-        <li>Create and contribute a custom <a href="https://beam.apache.org/documentation/programming-guide/#pipeline-io">I/O connector</a> for a specific data storage system you want to connect to, if it is not on <a href="https://beam.apache.org/documentation/io/built-in/">the I/O list yet</a>.</li>
+        <li>Create and contribute a custom <a href="/documentation/programming-guide/#pipeline-io">I/O connector</a> for a specific data storage system you want to connect to, if it is not on <a href="/documentation/io/built-in/">the I/O list yet</a>.</li>
         <li>Look at our project backlog to get some inspiration on what to build.</li>
-        <li>Follow our <a href="https://beam.apache.org/contribute/get-started-contributing/">Code Contribution Guide</a>.</li>
+        <li>Follow our <a href="https://github.com/apache/beam/blob/master/CONTRIBUTING.md">Code Contribution Guide</a>.</li>
       </ul>
     </td>
   </tr>
   <tr>
     <td>Share a code sample or template</td>
     <td class="list-text-size-md">
-      <ol>
-        <li>Read our <a href="https://beam.apache.org/contribute/get-started-contributing/">Code Contribution Guide</a>.</li>
+      <ul>
+        <li>Read our <a href="https://github.com/apache/beam/blob/master/CONTRIBUTING.md">Code Contribution Guide</a>.</li>
         <li>Create your code sample or template. </li>
-        <li><a href="https://beam.apache.org/contribute/get-started-contributing/#make-your-change">Make a Pull Request</a> to add it to the Beam example folder.</li>
-      </ol>
+        <li><a href="https://github.com/apache/beam/blob/master/CONTRIBUTING.md#make-your-change">Make a Pull Request</a> to add it to the Beam example folder.</li>
+      </ul>
     </td>
   </tr>
   <tr>
     <td>Test a release candidate</td>
     <td>
-      Anybody can <a href="https://beam.apache.org/contribute/release-guide/">propose a release</a> via the dev@beam.apache.org mailing list. Try Apache Beam releases in your projects, vote for release candidates, inform the community about the results and any issues found via <a href="mailto:dev@beam.apache.org">dev@beam.apache.org</a>. Learn more about how to validate a Beam release <a href="https://beam.apache.org/blog/validate-beam-release/">here</a>.
+      Anybody can <a href="/contribute/release-guide/">propose a release</a> via the dev@beam.apache.org mailing list. Try Apache Beam releases in your projects, vote for release candidates, inform the community about the results and any issues found via <a href="mailto:dev@beam.apache.org">dev@beam.apache.org</a>. Learn more about how to validate a Beam release <a href="/blog/validate-beam-release/">here</a>.
     </td>
   </tr>
   <tr>
@@ -147,7 +157,7 @@ Here’s a list of things you can do to get started contributing:
     </td>
   </tr>
 </table>
-
+</div>
 
 ## Become a Committer
 

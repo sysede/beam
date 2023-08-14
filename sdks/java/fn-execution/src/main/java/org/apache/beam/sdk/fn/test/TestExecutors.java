@@ -20,7 +20,7 @@ package org.apache.beam.sdk.fn.test;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.ForwardingExecutorService;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.util.concurrent.ForwardingExecutorService;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -30,7 +30,7 @@ import org.junit.runners.model.Statement;
  * allows for testing that tasks have exercised the appropriate shutdown logic.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class TestExecutors {
   public static TestExecutorService from(final ExecutorService staticExecutorService) {

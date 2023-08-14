@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.transforms;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
 
 import javax.annotation.CheckForNull;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -54,7 +54,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *     {@code PCollection}
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class WithKeys<K, V> extends PTransform<PCollection<V>, PCollection<KV<K, V>>> {
   /**

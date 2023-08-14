@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils;
-import org.apache.beam.vendor.calcite.v1_28_0.com.google.common.base.Preconditions;
-import org.apache.beam.vendor.calcite.v1_28_0.com.google.common.collect.ImmutableMultimap;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.adapter.enumerable.CallImplementor;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.adapter.enumerable.NullPolicy;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.adapter.enumerable.ReflectiveCallNotNullImplementor;
@@ -46,6 +44,8 @@ import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.schema.Function
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.schema.ImplementableFunction;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.schema.ScalarFunction;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.sql.SqlOperatorBinding;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMultimap;
 
 /**
  * Beam-customized version from {@link
@@ -53,8 +53,8 @@ import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.sql.SqlOperator
  * address BEAM-5921.
  */
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class ScalarFunctionImpl extends UdfImplReflectiveFunctionBase
     implements ScalarFunction, ImplementableFunction {
@@ -164,7 +164,8 @@ public class ScalarFunctionImpl extends UdfImplReflectiveFunctionBase
 
       final List<Expression> translated = new ArrayList<>();
       for (int i = 0; i < expressions.size(); i++) {
-        // TODO: [BEAM-8255] Add support for user defined function with var-arg
+        // TODO: [https://github.com/apache/beam/issues/19825] Add support for user defined function
+        // with var-arg
         // Ex: types: [String[].class], expression: [param1, param2, ...]
         translated.add(translate(types.get(i), expressions.get(i)));
       }

@@ -17,7 +17,7 @@
  */
 package org.apache.beam.runners.dataflow;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import java.util.Map;
 import org.apache.beam.runners.core.construction.PTransformReplacements;
@@ -58,7 +58,7 @@ import org.joda.time.Instant;
  * grouping and expansion.
  *
  * <p>This implementation relies on implementation details of the Dataflow runner, specifically
- * standard fusion behavior of {@link ParDo} tranforms following a {@link GroupByKey}.
+ * standard fusion behavior of {@link ParDo} transforms following a {@link GroupByKey}.
  */
 public class BatchStatefulParDoOverrides {
 

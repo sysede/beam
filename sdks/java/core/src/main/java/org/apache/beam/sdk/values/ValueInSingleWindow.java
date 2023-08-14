@@ -27,7 +27,7 @@ import org.apache.beam.sdk.coders.InstantCoder;
 import org.apache.beam.sdk.coders.StructuredCoder;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.transforms.windowing.PaneInfo;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 
@@ -38,12 +38,18 @@ import org.joda.time.Instant;
  */
 @AutoValue
 @Internal
-@SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
-})
 public abstract class ValueInSingleWindow<T> {
   /** Returns the value of this {@code ValueInSingleWindow}. */
-  public abstract @Nullable T getValue();
+  @SuppressWarnings("nullness")
+  public T getValue() {
+    return getNullableValue();
+  };
+
+  /**
+   * Workaround for autovalue code generation, which does not allow type variables to be
+   * instantiated with nullable actual parameters.
+   */
+  protected abstract @Nullable T getNullableValue();
 
   /** Returns the timestamp of this {@code ValueInSingleWindow}. */
   public abstract Instant getTimestamp();

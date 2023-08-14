@@ -38,7 +38,7 @@ import org.apache.beam.sdk.transforms.Sum;
 import org.apache.beam.sdk.transforms.Top;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 
 /**
  * Load test for {@link ParDo} operation.
@@ -64,7 +64,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditio
  * </pre>
  */
 @SuppressWarnings({
-  "rawtypes" // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes" // TODO(https://github.com/apache/beam/issues/20447)
 })
 public class CombineLoadTest extends LoadTest<CombineLoadTest.Options> {
 

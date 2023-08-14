@@ -29,11 +29,12 @@ import org.apache.beam.sdk.schemas.Schema.FieldType;
 import org.apache.beam.sdk.schemas.annotations.DefaultSchema;
 import org.apache.beam.sdk.schemas.annotations.SchemaCaseFormat;
 import org.apache.beam.sdk.schemas.annotations.SchemaCreate;
+import org.apache.beam.sdk.schemas.annotations.SchemaFieldDescription;
 import org.apache.beam.sdk.schemas.annotations.SchemaFieldName;
 import org.apache.beam.sdk.schemas.annotations.SchemaFieldNumber;
 import org.apache.beam.sdk.schemas.annotations.SchemaIgnore;
 import org.apache.beam.sdk.schemas.logicaltypes.EnumerationType;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.CaseFormat;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.CaseFormat;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.DateTime;
 import org.joda.time.Instant;
@@ -1106,4 +1107,171 @@ public class TestPOJOs {
       this.user = user;
     }
   }
+
+  /** A POJO containing itself as a nested class. * */
+  @DefaultSchema(JavaFieldSchema.class)
+  public static class SelfNestedPOJO {
+    public SelfNestedPOJO nested;
+
+    public SelfNestedPOJO(SelfNestedPOJO nested) {
+      this.nested = nested;
+    }
+
+    public SelfNestedPOJO() {}
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SelfNestedPOJO that = (SelfNestedPOJO) o;
+      return Objects.equals(nested, that.nested);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(nested);
+    }
+  }
+
+  /**
+   * A POJO containing a circular reference back to itself through the accompanying POJO below. *
+   */
+  @DefaultSchema(JavaFieldSchema.class)
+  public static class FirstCircularNestedPOJO {
+    public SecondCircularNestedPOJO nested;
+
+    public FirstCircularNestedPOJO(SecondCircularNestedPOJO nested) {
+      this.nested = nested;
+    }
+
+    public FirstCircularNestedPOJO() {}
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      FirstCircularNestedPOJO that = (FirstCircularNestedPOJO) o;
+      return Objects.equals(nested, that.nested);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(nested);
+    }
+  }
+
+  /**
+   * A POJO containing a circular reference back to itself through the accompanying POJO below. *
+   */
+  @DefaultSchema(JavaFieldSchema.class)
+  public static class SecondCircularNestedPOJO {
+    public FirstCircularNestedPOJO nested;
+
+    public SecondCircularNestedPOJO(FirstCircularNestedPOJO nested) {
+      this.nested = nested;
+    }
+
+    public SecondCircularNestedPOJO() {}
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SecondCircularNestedPOJO that = (SecondCircularNestedPOJO) o;
+      return Objects.equals(nested, that.nested);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(nested);
+    }
+  }
+
+  /** A POJO containing a nested class, along with a SimplePOJO. * */
+  @DefaultSchema(JavaFieldSchema.class)
+  public static class NestedPOJOWithSimplePOJO {
+    public NestedPOJO nested;
+    public SimplePOJO simplePojo;
+
+    public NestedPOJOWithSimplePOJO(NestedPOJO nested, SimplePOJO simplePojo) {
+      this.nested = nested;
+      this.simplePojo = simplePojo;
+    }
+
+    public NestedPOJOWithSimplePOJO() {}
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      NestedPOJOWithSimplePOJO that = (NestedPOJOWithSimplePOJO) o;
+      return Objects.equals(nested, that.nested);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(nested);
+    }
+  }
+
+  /** The schema for {@link NestedPOJOWithSimplePOJO}. * */
+  public static final Schema NESTED_POJO_WITH_SIMPLE_POJO_SCHEMA =
+      Schema.builder()
+          .addRowField("nested", NESTED_POJO_SCHEMA)
+          .addRowField("simplePojo", SIMPLE_POJO_SCHEMA)
+          .build();
+
+  /** A simple POJO containing nullable basic types. * */
+  @DefaultSchema(JavaFieldSchema.class)
+  public static class SimplePOJOWithDescription {
+    @SchemaFieldDescription("a simple string that is part of this field")
+    public @Nullable String str;
+
+    public SimplePOJOWithDescription() {}
+
+    public SimplePOJOWithDescription(String str) {
+      this.str = str;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SimplePOJOWithDescription that = (SimplePOJOWithDescription) o;
+      return Objects.equals(str, that.str);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(str);
+    }
+  }
+
+  /** The schema for {@link NullablePOJO}. * */
+  public static final Schema SIMPLE_POJO_WITH_DESCRIPTION_SCHEMA =
+      Schema.builder()
+          .addField(
+              Schema.Field.nullable("str", FieldType.STRING)
+                  .withDescription("a simple string that is part of this field"))
+          .build();
 }

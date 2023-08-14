@@ -17,15 +17,15 @@
  */
 package org.apache.beam.sdk.io.tika;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 import org.apache.beam.sdk.util.SerializableThrowable;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Throwables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.MoreObjects;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Throwables;
 import org.apache.tika.metadata.Metadata;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -35,7 +35,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * partial (i.e. not represent the entire file).
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class ParseResult implements Serializable {
   private final String fileLocation;

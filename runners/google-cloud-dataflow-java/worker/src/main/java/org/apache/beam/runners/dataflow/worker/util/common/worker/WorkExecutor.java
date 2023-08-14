@@ -19,12 +19,12 @@ package org.apache.beam.runners.dataflow.worker.util.common.worker;
 
 import java.util.List;
 import org.apache.beam.runners.dataflow.worker.counters.CounterSet;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** Abstract executor for WorkItem tasks. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public interface WorkExecutor extends AutoCloseable {
 

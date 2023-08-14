@@ -96,8 +96,9 @@ ReadFromKafkaSchema = typing.NamedTuple(
      ('commit_offset_in_finalize', bool), ('timestamp_policy', str)])
 
 
-def default_io_expansion_service():
-  return BeamJarExpansionService('sdks:java:io:expansion-service:shadowJar')
+def default_io_expansion_service(append_args=None):
+  return BeamJarExpansionService(
+      'sdks:java:io:expansion-service:shadowJar', append_args=append_args)
 
 
 class ReadFromKafka(ExternalTransform):

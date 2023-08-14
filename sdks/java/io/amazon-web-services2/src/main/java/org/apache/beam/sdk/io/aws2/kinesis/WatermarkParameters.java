@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.io.aws2.kinesis;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import com.google.auto.value.AutoValue;
 import java.io.Serializable;
@@ -84,7 +84,7 @@ public abstract class WatermarkParameters implements Serializable {
   public WatermarkParameters withTimestampFn(
       SerializableFunction<KinesisRecord, Instant> timestampFn) {
     checkArgument(timestampFn != null, "timestampFn function is null");
-    return builder().setTimestampFn(timestampFn).build();
+    return toBuilder().setTimestampFn(timestampFn).build();
   }
 
   /**
@@ -93,6 +93,6 @@ public abstract class WatermarkParameters implements Serializable {
    */
   public WatermarkParameters withWatermarkIdleDurationThreshold(Duration idleDurationThreshold) {
     checkArgument(idleDurationThreshold != null, "watermark idle duration threshold is null");
-    return builder().setWatermarkIdleDurationThreshold(idleDurationThreshold).build();
+    return toBuilder().setWatermarkIdleDurationThreshold(idleDurationThreshold).build();
   }
 }

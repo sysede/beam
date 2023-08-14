@@ -37,7 +37,7 @@ import org.apache.beam.sdk.values.PInput;
 import org.apache.beam.sdk.values.Row;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -104,8 +104,8 @@ public class ProjectionPushdownOptimizerTest {
         FieldAccessDescriptor.withFieldNames("foo", "bar");
     p.apply(source).apply(originalT).apply(new FieldAccessTransform(downstreamFieldAccess));
 
-    // TODO(BEAM-13658) Support pushdown on intermediate transforms.
-    // For now, test that the pushdown optimizer ignores immediate transforms.
+    // TODO(https://github.com/apache/beam/issues/21359) Support pushdown on intermediate
+    // transforms. For now, test that the pushdown optimizer ignores immediate transforms.
     ProjectionPushdownOptimizer.optimize(p);
     Assert.assertTrue(pipelineHasTransform(p, originalT));
   }

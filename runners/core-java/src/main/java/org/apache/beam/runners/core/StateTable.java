@@ -23,9 +23,9 @@ import java.util.Set;
 import org.apache.beam.runners.core.StateTag.StateBinder;
 import org.apache.beam.sdk.state.State;
 import org.apache.beam.sdk.state.StateContext;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Equivalence;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.HashBasedTable;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Table;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Equivalence;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.HashBasedTable;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Table;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -36,8 +36,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * yet initialized.
  */
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public abstract class StateTable {
 

@@ -16,6 +16,7 @@
 
 import re
 import unittest
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -25,6 +26,11 @@ import apache_beam as beam
 from apache_beam.dataframe import expressions
 from apache_beam.dataframe import frame_base
 from apache_beam.dataframe import frames
+from apache_beam.dataframe.convert import to_dataframe
+from apache_beam.runners.interactive import interactive_beam as ib
+from apache_beam.runners.interactive import interactive_environment as ie
+from apache_beam.runners.interactive.interactive_runner import InteractiveRunner
+from apache_beam.runners.interactive.testing.mock_env import isolated_env
 
 # Get major, minor version
 PD_VERSION = tuple(map(int, pd.__version__.split('.')[0:2]))
@@ -137,7 +143,8 @@ class _AbstractFrameTest(unittest.TestCase):
             This option should NOT be set to False in tests added for new
             operations if at all possible. Instead make sure the new operation
             produces the correct proxy. This flag only exists as an escape hatch
-            until existing failures can be addressed (BEAM-12379).
+            until existing failures can be addressed
+            (https://github.com/apache/beam/issues/20926).
         lenient_dtype_check (bool): Whether or not to check that numeric columns
             are still numeric between actual and proxy. i.e. verify that they
             are at least int64 or float64, and not necessarily have the exact
@@ -277,7 +284,8 @@ class DeferredFrameTest(_AbstractFrameTest):
         'first_name': ['John', 'Anne', 'John', 'Beth'],
         'middle_name': ['Smith', pd.NA, pd.NA, 'Louise']
     })
-    # TODO(BEAM-12495): Remove the assertRaises this when the underlying bug in
+    # TODO(https://github.com/apache/beam/issues/21014): Remove the
+    # assertRaises this when the underlying bug in
     # https://github.com/pandas-dev/pandas/issues/36470 is fixed.
     with self.assertRaises(NotImplementedError):
       self._run_test(lambda df: df.value_counts(dropna=False), df)
@@ -683,8 +691,9 @@ class DeferredFrameTest(_AbstractFrameTest):
 
     if PD_VERSION >= (1, 3):
       # dropna=False is new in pandas 1.3
-      # TODO(BEAM-12495): Remove the assertRaises this when the underlying bug
-      # in https://github.com/pandas-dev/pandas/issues/36470 is fixed.
+      # TODO(https://github.com/apache/beam/issues/21014): Remove the
+      # assertRaises this when the underlying bug in
+      # https://github.com/pandas-dev/pandas/issues/36470 is fixed.
       with self.assertRaises(NotImplementedError):
         self._run_test(lambda df: df.value_counts(dropna=False), df)
 
@@ -773,8 +782,8 @@ class DeferredFrameTest(_AbstractFrameTest):
 
   def test_loc(self):
     dates = pd.date_range('1/1/2000', periods=8)
-    # TODO(BEAM-11757): We do not preserve the freq attribute on a DateTime
-    # index
+    # TODO(https://github.com/apache/beam/issues/20765):
+    # We do not preserve the freq attribute on a DateTime index
     dates.freq = None
     df = pd.DataFrame(
         np.arange(32).reshape((8, 4)),
@@ -1001,6 +1010,32 @@ class DeferredFrameTest(_AbstractFrameTest):
     # it will require a little more complex logic
     self._run_test(lambda df: df.groupby(level=0).sum(), df, nonparallel=True)
     self._run_test(lambda df: df.groupby(level=0).mean(), df, nonparallel=True)
+
+  def test_astype_categorical(self):
+    df = pd.DataFrame({'A': np.arange(6), 'B': list('aabbca')})
+    categorical_dtype = pd.CategoricalDtype(df.B.unique())
+
+    self._run_test(lambda df: df.B.astype(categorical_dtype), df)
+
+  @unittest.skipIf(
+      PD_VERSION < (1, 2), "DataFrame.unstack not supported in pandas <1.2.x")
+  def test_astype_categorical_with_unstack(self):
+    df = pd.DataFrame({
+        'index1': ['one', 'one', 'two', 'two'],
+        'index2': ['a', 'b', 'a', 'b'],
+        'data': np.arange(1.0, 5.0),
+    })
+
+    def with_categorical_index(df):
+      df.index1 = df.index1.astype(pd.CategoricalDtype(['one', 'two']))
+      df.index2 = df.index2.astype(pd.CategoricalDtype(['a', 'b']))
+      df.set_index(['index1', 'index2'], drop=True)
+      return df
+
+    self._run_test(
+        lambda df: with_categorical_index(df).unstack(level=-1),
+        df,
+        check_proxy=False)
 
   def test_dataframe_sum_nonnumeric_raises(self):
     # Attempting a numeric aggregation with the str column present should
@@ -1601,12 +1636,18 @@ ALL_GROUPING_AGGREGATIONS = sorted(
 
 class GroupByTest(_AbstractFrameTest):
   """Tests for DataFrame/Series GroupBy operations."""
+  @staticmethod
+  def median_sum_fn(x):
+    with warnings.catch_warnings():
+      warnings.filterwarnings("ignore", message="Mean of empty slice")
+      return (x.foo + x.bar).median()
+
   @parameterized.expand(ALL_GROUPING_AGGREGATIONS)
   def test_groupby_agg(self, agg_type):
     if agg_type == 'describe' and PD_VERSION < (1, 2):
       self.skipTest(
-          "BEAM-12366: proxy generation of DataFrameGroupBy.describe "
-          "fails in pandas < 1.2")
+          "https://github.com/apache/beam/issues/20967: proxy generation of "
+          "DataFrameGroupBy.describe fails in pandas < 1.2")
     self._run_test(
         lambda df: df.groupby('group').agg(agg_type),
         GROUPBY_DF,
@@ -1616,8 +1657,8 @@ class GroupByTest(_AbstractFrameTest):
   def test_groupby_with_filter(self, agg_type):
     if agg_type == 'describe' and PD_VERSION < (1, 2):
       self.skipTest(
-          "BEAM-12366: proxy generation of DataFrameGroupBy.describe "
-          "fails in pandas < 1.2")
+          "https://github.com/apache/beam/issues/20967: proxy generation of "
+          "DataFrameGroupBy.describe fails in pandas < 1.2")
     self._run_test(
         lambda df: getattr(df[df.foo > 30].groupby('group'), agg_type)(),
         GROUPBY_DF,
@@ -1627,8 +1668,8 @@ class GroupByTest(_AbstractFrameTest):
   def test_groupby(self, agg_type):
     if agg_type == 'describe' and PD_VERSION < (1, 2):
       self.skipTest(
-          "BEAM-12366: proxy generation of DataFrameGroupBy.describe "
-          "fails in pandas < 1.2")
+          "https://github.com/apache/beam/issues/20967: proxy generation of "
+          "DataFrameGroupBy.describe fails in pandas < 1.2")
 
     self._run_test(
         lambda df: getattr(df.groupby('group'), agg_type)(),
@@ -1639,8 +1680,8 @@ class GroupByTest(_AbstractFrameTest):
   def test_groupby_series(self, agg_type):
     if agg_type == 'describe' and PD_VERSION < (1, 2):
       self.skipTest(
-          "BEAM-12366: proxy generation of DataFrameGroupBy.describe "
-          "fails in pandas < 1.2")
+          "https://github.com/apache/beam/issues/20967: proxy generation of "
+          "DataFrameGroupBy.describe fails in pandas < 1.2")
 
     self._run_test(
         lambda df: getattr(df[df.foo > 40].groupby(df.group), agg_type)(),
@@ -1667,12 +1708,12 @@ class GroupByTest(_AbstractFrameTest):
 
     if agg_type == 'describe':
       self.skipTest(
-          "BEAM-12366: proxy generation of SeriesGroupBy.describe "
-          "fails")
+          "https://github.com/apache/beam/issues/20967: proxy generation of "
+          "SeriesGroupBy.describe fails")
     if agg_type in ('corr', 'cov'):
       self.skipTest(
-          "BEAM-12367: SeriesGroupBy.{corr, cov} do not raise the "
-          "expected error.")
+          "https://github.com/apache/beam/issues/20895: "
+          "SeriesGroupBy.{corr, cov} do not raise the expected error.")
 
     self._run_test(lambda df: getattr(df.groupby('group').foo, agg_type)(), df)
     self._run_test(lambda df: getattr(df.groupby('group').bar, agg_type)(), df)
@@ -1685,8 +1726,8 @@ class GroupByTest(_AbstractFrameTest):
   def test_groupby_project_dataframe(self, agg_type):
     if agg_type == 'describe' and PD_VERSION < (1, 2):
       self.skipTest(
-          "BEAM-12366: proxy generation of DataFrameGroupBy.describe "
-          "fails in pandas < 1.2")
+          "https://github.com/apache/beam/issues/20967: proxy generation of "
+          "DataFrameGroupBy.describe fails in pandas < 1.2")
     self._run_test(
         lambda df: getattr(df.groupby('group')[['bar', 'baz']], agg_type)(),
         GROUPBY_DF,
@@ -1723,10 +1764,6 @@ class GroupByTest(_AbstractFrameTest):
 
   def test_groupby_apply(self):
     df = GROUPBY_DF
-
-    def median_sum_fn(x):
-      return (x.foo + x.bar).median()
-
     # Note this is the same as DataFrameGroupBy.describe. Using it here is
     # just a convenient way to test apply() with a user fn that returns a Series
     describe = lambda df: df.describe()
@@ -1734,17 +1771,17 @@ class GroupByTest(_AbstractFrameTest):
     self._run_test(lambda df: df.groupby('group').foo.apply(describe), df)
     self._run_test(
         lambda df: df.groupby('group')[['foo', 'bar']].apply(describe), df)
-    self._run_test(lambda df: df.groupby('group').apply(median_sum_fn), df)
+    self._run_test(lambda df: df.groupby('group').apply(self.median_sum_fn), df)
     self._run_test(
         lambda df: df.set_index('group').foo.groupby(level=0).apply(describe),
         df)
-    self._run_test(lambda df: df.groupby(level=0).apply(median_sum_fn), df)
+    self._run_test(lambda df: df.groupby(level=0).apply(self.median_sum_fn), df)
     self._run_test(lambda df: df.groupby(lambda x: x % 3).apply(describe), df)
     self._run_test(
         lambda df: df.bar.groupby(lambda x: x % 3).apply(describe), df)
     self._run_test(
         lambda df: df.set_index(['str', 'group', 'bool']).groupby(
-            level='group').apply(median_sum_fn),
+            level='group').apply(self.median_sum_fn),
         df)
 
   def test_groupby_apply_preserves_column_order(self):
@@ -1798,7 +1835,7 @@ class GroupByTest(_AbstractFrameTest):
             lambda x: x[x.foo > x.foo.median()]),
         df)
 
-  @unittest.skip('BEAM-11710')
+  @unittest.skip('https://github.com/apache/beam/issues/20762')
   def test_groupby_aggregate_grouped_column(self):
     df = pd.DataFrame({
         'group': ['a' if i % 5 == 0 or i % 3 == 0 else 'b' for i in range(100)],
@@ -1830,9 +1867,7 @@ class GroupByTest(_AbstractFrameTest):
     self._run_test(
         lambda df: df.groupby(level=level).sum(numeric_only=True), df)
     self._run_test(
-        lambda df: df.groupby(level=level).apply(
-            lambda x: (x.foo + x.bar).median()),
-        df)
+        lambda df: df.groupby(level=level).apply(self.median_sum_fn), df)
 
   @unittest.skipIf(PD_VERSION < (1, 1), "drop_na added in pandas 1.1.0")
   def test_groupby_count_na(self):
@@ -1861,8 +1896,8 @@ class GroupByTest(_AbstractFrameTest):
   def test_dataframe_groupby_series(self, agg_type):
     if agg_type == 'describe' and PD_VERSION < (1, 2):
       self.skipTest(
-          "BEAM-12366: proxy generation of DataFrameGroupBy.describe "
-          "fails in pandas < 1.2")
+          "https://github.com/apache/beam/issues/20967: proxy generation of "
+          "DataFrameGroupBy.describe fails in pandas < 1.2")
     self._run_test(
         lambda df: df[df.foo > 40].groupby(df.group).agg(agg_type),
         GROUPBY_DF,
@@ -1876,12 +1911,12 @@ class GroupByTest(_AbstractFrameTest):
   def test_series_groupby_series(self, agg_type):
     if agg_type == 'describe':
       self.skipTest(
-          "BEAM-12366: proxy generation of SeriesGroupBy.describe "
-          "fails")
+          "https://github.com/apache/beam/issues/20967: proxy generation of "
+          "SeriesGroupBy.describe fails")
     if agg_type in ('corr', 'cov'):
       self.skipTest(
-          "BEAM-12367: SeriesGroupBy.{corr, cov} do not raise the "
-          "expected error.")
+          "https://github.com/apache/beam/issues/20895: "
+          "SeriesGroupBy.{corr, cov} do not raise the expected error.")
     self._run_test(
         lambda df: df[df.foo < 40].bar.groupby(df.group).agg(agg_type),
         GROUPBY_DF)
@@ -1892,9 +1927,6 @@ class GroupByTest(_AbstractFrameTest):
   def test_groupby_series_apply(self):
     df = GROUPBY_DF
 
-    def median_sum_fn(x):
-      return (x.foo + x.bar).median()
-
     # Note this is the same as DataFrameGroupBy.describe. Using it here is
     # just a convenient way to test apply() with a user fn that returns a Series
     describe = lambda df: df.describe()
@@ -1902,12 +1934,14 @@ class GroupByTest(_AbstractFrameTest):
     self._run_test(lambda df: df.groupby(df.group).foo.apply(describe), df)
     self._run_test(
         lambda df: df.groupby(df.group)[['foo', 'bar']].apply(describe), df)
-    self._run_test(lambda df: df.groupby(df.group).apply(median_sum_fn), df)
+    self._run_test(
+        lambda df: df.groupby(df.group).apply(self.median_sum_fn), df)
 
   def test_groupby_multiindex_keep_nans(self):
     # Due to https://github.com/pandas-dev/pandas/issues/36470
     # groupby(dropna=False) doesn't work with multiple columns
-    with self.assertRaisesRegex(NotImplementedError, "BEAM-12495"):
+    with self.assertRaisesRegex(NotImplementedError,
+                                "https://github.com/apache/beam/issues/21014"):
       self._run_test(
           lambda df: df.groupby(['foo', 'bar'], dropna=False).sum(), GROUPBY_DF)
 
@@ -1921,10 +1955,10 @@ class AggregationTest(_AbstractFrameTest):
   def test_series_agg(self, agg_method):
     s = pd.Series(list(range(16)))
 
-    nonparallel = agg_method in (
-        'quantile', 'mean', 'describe', 'median', 'sem', 'mad')
+    nonparallel = agg_method in ('quantile', 'describe', 'median', 'sem', 'mad')
 
-    # TODO(BEAM-12379): max and min produce the wrong proxy
+    # TODO(https://github.com/apache/beam/issues/20926): max and min produce
+    # the wrong proxy
     check_proxy = agg_method not in ('max', 'min')
 
     self._run_test(
@@ -1940,10 +1974,10 @@ class AggregationTest(_AbstractFrameTest):
   def test_series_agg_method(self, agg_method):
     s = pd.Series(list(range(16)))
 
-    nonparallel = agg_method in (
-        'quantile', 'mean', 'describe', 'median', 'sem', 'mad')
+    nonparallel = agg_method in ('quantile', 'describe', 'median', 'sem', 'mad')
 
-    # TODO(BEAM-12379): max and min produce the wrong proxy
+    # TODO(https://github.com/apache/beam/issues/20926): max and min produce
+    # the wrong proxy
     check_proxy = agg_method not in ('max', 'min')
 
     self._run_test(
@@ -1956,10 +1990,10 @@ class AggregationTest(_AbstractFrameTest):
   def test_dataframe_agg(self, agg_method):
     df = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [2, 3, 5, 7]})
 
-    nonparallel = agg_method in (
-        'quantile', 'mean', 'describe', 'median', 'sem', 'mad')
+    nonparallel = agg_method in ('quantile', 'describe', 'median', 'sem', 'mad')
 
-    # TODO(BEAM-12379): max and min produce the wrong proxy
+    # TODO(https://github.com/apache/beam/issues/20926): max and min produce
+    # the wrong proxy
     check_proxy = agg_method not in ('max', 'min')
 
     self._run_test(
@@ -1973,10 +2007,10 @@ class AggregationTest(_AbstractFrameTest):
   def test_dataframe_agg_method(self, agg_method):
     df = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [2, 3, 5, 7]})
 
-    nonparallel = agg_method in (
-        'quantile', 'mean', 'describe', 'median', 'sem', 'mad')
+    nonparallel = agg_method in ('quantile', 'describe', 'median', 'sem', 'mad')
 
-    # TODO(BEAM-12379): max and min produce the wrong proxy
+    # TODO(https://github.com/apache/beam/issues/20926): max and min produce
+    # the wrong proxy
     check_proxy = agg_method not in ('max', 'min')
 
     self._run_test(
@@ -1989,27 +2023,18 @@ class AggregationTest(_AbstractFrameTest):
     s = pd.Series(list(range(16)))
     self._run_test(lambda s: s.agg('sum'), s)
     self._run_test(lambda s: s.agg(['sum']), s)
-    self._run_test(lambda s: s.agg(['sum', 'mean']), s, nonparallel=True)
-    self._run_test(lambda s: s.agg(['mean']), s, nonparallel=True)
-    self._run_test(lambda s: s.agg('mean'), s, nonparallel=True)
+    self._run_test(lambda s: s.agg(['sum', 'mean']), s)
+    self._run_test(lambda s: s.agg(['mean']), s)
+    self._run_test(lambda s: s.agg('mean'), s)
 
   def test_dataframe_agg_modes(self):
     df = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [2, 3, 5, 7]})
     self._run_test(lambda df: df.agg('sum'), df)
-    self._run_test(lambda df: df.agg(['sum', 'mean']), df, nonparallel=True)
+    self._run_test(lambda df: df.agg(['sum', 'mean']), df)
     self._run_test(lambda df: df.agg({'A': 'sum', 'B': 'sum'}), df)
-    self._run_test(
-        lambda df: df.agg({
-            'A': 'sum', 'B': 'mean'
-        }), df, nonparallel=True)
-    self._run_test(
-        lambda df: df.agg({'A': ['sum', 'mean']}), df, nonparallel=True)
-    self._run_test(
-        lambda df: df.agg({
-            'A': ['sum', 'mean'], 'B': 'min'
-        }),
-        df,
-        nonparallel=True)
+    self._run_test(lambda df: df.agg({'A': 'sum', 'B': 'mean'}), df)
+    self._run_test(lambda df: df.agg({'A': ['sum', 'mean']}), df)
+    self._run_test(lambda df: df.agg({'A': ['sum', 'mean'], 'B': 'min'}), df)
 
   def test_series_agg_level(self):
     self._run_test(
@@ -2082,6 +2107,21 @@ class AggregationTest(_AbstractFrameTest):
         lambda df: df.set_index(['group', 'foo']).bar.agg(['min', 'max'],
                                                           level=0),
         GROUPBY_DF)
+
+  def test_series_mean_skipna(self):
+    df = pd.DataFrame({
+        'one': [i if i % 8 == 0 else np.nan for i in range(8)],
+        'two': [i if i % 4 == 0 else np.nan for i in range(8)],
+        'three': [i if i % 2 == 0 else np.nan for i in range(8)],
+    })
+
+    self._run_test(lambda df: df.one.mean(skipna=False), df)
+    self._run_test(lambda df: df.two.mean(skipna=False), df)
+    self._run_test(lambda df: df.three.mean(skipna=False), df)
+
+    self._run_test(lambda df: df.one.mean(skipna=True), df)
+    self._run_test(lambda df: df.two.mean(skipna=True), df)
+    self._run_test(lambda df: df.three.mean(skipna=True), df)
 
   def test_dataframe_agg_multifunc_level(self):
     # level= is ignored for multiple agg fns
@@ -2782,6 +2822,13 @@ class BeamSpecificTest(unittest.TestCase):
     self.assert_frame_data_equivalent(
         result, s.str.split(r"\.jpg", regex=True, expand=False))
 
+  def test_astype_categorical_rejected(self):
+    df = pd.DataFrame({'A': np.arange(6), 'B': list('aabbca')})
+
+    with self.assertRaisesRegex(frame_base.WontImplementError,
+                                r"astype\(dtype='category'\)"):
+      self._evaluate(lambda df: df.B.astype('category'), df)
+
 
 class AllowNonParallelTest(unittest.TestCase):
   def _use_non_parallel_operation(self):
@@ -3024,6 +3071,37 @@ class ReprTest(unittest.TestCase):
     self.assertEqual(
         repr(df),
         "DeferredSeries(name='baz', dtype=float64, indexes=['str', 'group'])")
+
+
+@unittest.skipIf(
+    not ie.current_env().is_interactive_ready,
+    '[interactive] dependency is not installed.')
+@isolated_env
+class InteractiveDataFrameTest(unittest.TestCase):
+  def test_collect_merged_dataframes(self):
+    p = beam.Pipeline(InteractiveRunner())
+    pcoll_1 = (
+        p
+        | 'Create data 1' >> beam.Create([(1, 'a'), (2, 'b'), (3, 'c'),
+                                          (4, 'd')])
+        |
+        'To rows 1' >> beam.Select(col_1=lambda x: x[0], col_2=lambda x: x[1]))
+    df_1 = to_dataframe(pcoll_1)
+    pcoll_2 = (
+        p
+        | 'Create data 2' >> beam.Create([(5, 'e'), (6, 'f'), (7, 'g'),
+                                          (8, 'h')])
+        |
+        'To rows 2' >> beam.Select(col_3=lambda x: x[0], col_4=lambda x: x[1]))
+    df_2 = to_dataframe(pcoll_2)
+
+    df_merged = df_1.merge(df_2, left_index=True, right_index=True)
+    pd_df = ib.collect(df_merged).sort_values(by='col_1')
+    self.assertEqual(pd_df.shape, (4, 4))
+    self.assertEqual(list(pd_df['col_1']), [1, 2, 3, 4])
+    self.assertEqual(list(pd_df['col_2']), ['a', 'b', 'c', 'd'])
+    self.assertEqual(list(pd_df['col_3']), [5, 6, 7, 8])
+    self.assertEqual(list(pd_df['col_4']), ['e', 'f', 'g', 'h'])
 
 
 if __name__ == '__main__':

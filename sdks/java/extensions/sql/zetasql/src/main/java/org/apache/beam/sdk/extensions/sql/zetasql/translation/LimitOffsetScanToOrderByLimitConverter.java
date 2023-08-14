@@ -36,12 +36,12 @@ import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.rel.logical.Log
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.rel.logical.LogicalSort;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.rex.RexLiteral;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.rex.RexNode;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 
 /** Converts ORDER BY LIMIT. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 class LimitOffsetScanToOrderByLimitConverter extends RelConverter<ResolvedLimitOffsetScan> {
 

@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.nexmark.queries.sql;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import org.apache.beam.sdk.extensions.sql.SqlTransform;
 import org.apache.beam.sdk.extensions.sql.impl.CalciteQueryPlanner;
@@ -41,7 +41,7 @@ import org.apache.beam.sdk.values.TypeDescriptors;
 
 /** Basic stream enrichment: join a stream to a bounded side input. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class SqlBoundedSideInputJoin extends NexmarkQueryTransform<Bid> {
   private final String query;

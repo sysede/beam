@@ -18,7 +18,7 @@
 package org.apache.beam.runners.core.construction;
 
 import static org.apache.beam.runners.core.construction.BeamUrns.getUrn;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -46,12 +46,12 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PInput;
 import org.apache.beam.sdk.values.POutput;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Joiner;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSortedSet;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Joiner;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSet;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSortedSet;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -60,10 +60,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * buffers}.
  */
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
   "nullness",
   "keyfor"
-}) // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+}) // TODO(https://github.com/apache/beam/issues/20497)
 public class PTransformTranslation {
   // We specifically copy the values here so that they can be used in switch case statements
   // and we validate that the value matches the actual URN in the static block below.
@@ -106,6 +106,8 @@ public class PTransformTranslation {
       "beam:transform:group_into_batches_with_sharded_key:v1";
   public static final String PUBSUB_READ = "beam:transform:pubsub_read:v1";
   public static final String PUBSUB_WRITE = "beam:transform:pubsub_write:v1";
+
+  public static final String PUBSUB_WRITE_DYNAMIC = "beam:transform:pubsub_write:v2";
 
   // CombineComponents
   public static final String COMBINE_PER_KEY_PRECOMBINE_TRANSFORM_URN =
@@ -442,7 +444,8 @@ public class PTransformTranslation {
 
         // Required runner implemented transforms should not have an environment id.
         if (!RUNNER_IMPLEMENTED_TRANSFORMS.contains(spec.getUrn())) {
-          // TODO(BEAM-9309): Remove existing hacks around deprecated READ transform.
+          // TODO(https://github.com/apache/beam/issues/20094): Remove existing hacks around
+          // deprecated READ transform.
           if (spec.getUrn().equals(READ_TRANSFORM_URN)) {
             // Only assigning environment to Bounded reads. Not assigning an environment to
             // Unbounded

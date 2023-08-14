@@ -27,7 +27,6 @@ import org.apache.beam.sdk.extensions.sql.impl.rel.BeamLogicalConvention;
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils;
 import org.apache.beam.sdk.extensions.sql.meta.BeamSqlTable;
 import org.apache.beam.sdk.options.PipelineOptions;
-import org.apache.beam.vendor.calcite.v1_28_0.com.google.common.collect.ImmutableMap;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.adapter.java.AbstractQueryableTable;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.linq4j.QueryProvider;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.linq4j.Queryable;
@@ -42,11 +41,12 @@ import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.rex.RexNode;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.schema.ModifiableTable;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.schema.SchemaPlus;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.schema.TranslatableTable;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 
 /** Adapter from {@link BeamSqlTable} to a calcite Table. */
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class BeamCalciteTable extends AbstractQueryableTable
     implements ModifiableTable, TranslatableTable {

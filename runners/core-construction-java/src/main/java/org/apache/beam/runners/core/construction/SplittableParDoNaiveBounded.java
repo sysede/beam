@@ -17,7 +17,7 @@
  */
 package org.apache.beam.runners.core.construction;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -53,7 +53,7 @@ import org.apache.beam.sdk.values.PCollectionTuple;
 import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.Row;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.Uninterruptibles;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.util.concurrent.Uninterruptibles;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 
@@ -62,7 +62,7 @@ import org.joda.time.Instant;
  * {@link ProcessKeyedElements} using a simple {@link Reshuffle} and {@link ParDo}.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class SplittableParDoNaiveBounded {
   /** Overrides a {@link ProcessKeyedElements} into {@link SplittableProcessNaive}. */
@@ -123,7 +123,8 @@ public class SplittableParDoNaiveBounded {
     }
   }
 
-  static class NaiveProcessFn<InputT, OutputT, RestrictionT, PositionT, WatermarkEstimatorStateT>
+  public static class NaiveProcessFn<
+          InputT, OutputT, RestrictionT, PositionT, WatermarkEstimatorStateT>
       extends DoFn<KV<InputT, RestrictionT>, OutputT> {
     private final DoFn<InputT, OutputT> fn;
     private final Map<String, PCollectionView<?>> sideInputMapping;

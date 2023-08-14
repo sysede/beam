@@ -33,6 +33,7 @@ import com.google.api.services.cloudresourcemanager.CloudResourceManager.Project
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.storage.model.Bucket;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -45,8 +46,8 @@ import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.RestoreSystemProperties;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.Files;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -170,7 +171,7 @@ public class GcpOptionsTest {
                   + "[dataflow]%n"
                   + "magic = true%n",
               projectId);
-      Files.write(properties, path, StandardCharsets.UTF_8);
+      Files.asCharSink(path, StandardCharsets.UTF_8).write(properties);
     }
 
     private static String runGetProjectTest(File path, Map<String, String> environment)
@@ -209,7 +210,9 @@ public class GcpOptionsTest {
     public void testDefaultGcpTempLocationDoesNotExist() throws IOException {
       String tempLocation = "gs://does/not/exist";
       options.setTempLocation(tempLocation);
-      when(mockGcsUtil.bucketAccessible(any(GcsPath.class))).thenReturn(false);
+      doThrow(new FileNotFoundException())
+          .when(mockGcsUtil)
+          .verifyBucketAccessible(any(GcsPath.class));
       thrown.expect(IllegalArgumentException.class);
       thrown.expectMessage(
           "Error constructing default value for gcpTempLocation: tempLocation is not"

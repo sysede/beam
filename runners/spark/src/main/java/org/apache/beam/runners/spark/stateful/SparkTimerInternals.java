@@ -17,7 +17,7 @@
  */
 package org.apache.beam.runners.spark.stateful;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -31,14 +31,14 @@ import org.apache.beam.runners.spark.coders.CoderHelpers;
 import org.apache.beam.runners.spark.util.GlobalWatermarkHolder.SparkWatermarks;
 import org.apache.beam.sdk.state.TimeDomain;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 
 /** An implementation of {@link TimerInternals} for the SparkRunner. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class SparkTimerInternals implements TimerInternals {
   private final Instant highWatermark;
@@ -120,7 +120,8 @@ public class SparkTimerInternals implements TimerInternals {
   }
 
   @Override
-  public void deleteTimer(StateNamespace namespace, String timerId, String timerFamilyId, TimeDomain timeDomain) {
+  public void deleteTimer(
+      StateNamespace namespace, String timerId, String timerFamilyId, TimeDomain timeDomain) {
     throw new UnsupportedOperationException("Deleting a timer by ID is not yet supported.");
   }
 

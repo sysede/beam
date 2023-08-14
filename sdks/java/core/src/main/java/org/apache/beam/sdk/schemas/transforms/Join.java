@@ -18,8 +18,6 @@
 package org.apache.beam.sdk.schemas.transforms;
 
 import java.io.Serializable;
-import org.apache.beam.sdk.annotations.Experimental;
-import org.apache.beam.sdk.annotations.Experimental.Kind;
 import org.apache.beam.sdk.schemas.FieldAccessDescriptor;
 import org.apache.beam.sdk.schemas.Schema;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -52,9 +50,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * <p>Full outer joins, left outer joins, and right outer joins are also supported.
  */
-@Experimental(Kind.SCHEMAS)
 @SuppressWarnings({
-  "nullness", // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness", // TODO(https://github.com/apache/beam/issues/20497)
   "rawtypes"
 })
 public class Join {

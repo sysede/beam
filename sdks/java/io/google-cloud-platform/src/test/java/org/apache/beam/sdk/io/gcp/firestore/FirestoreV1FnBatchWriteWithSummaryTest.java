@@ -52,7 +52,7 @@ import org.apache.beam.sdk.io.gcp.firestore.FirestoreV1WriteFn.BaseBatchWriteFn;
 import org.apache.beam.sdk.io.gcp.firestore.FirestoreV1WriteFn.BatchWriteFnWithSummary;
 import org.apache.beam.sdk.io.gcp.firestore.FirestoreV1WriteFn.WriteElement;
 import org.apache.beam.sdk.io.gcp.firestore.RpcQos.RpcWriteAttempt.Element;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 import org.joda.time.Instant;
 import org.junit.After;
 import org.junit.Test;
@@ -60,7 +60,7 @@ import org.mockito.ArgumentCaptor;
 
 @SuppressWarnings({
   "initialization.fields.uninitialized", // mockito fields are initialized via the Mockito Runner
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public final class FirestoreV1FnBatchWriteWithSummaryTest
     extends BaseFirestoreV1WriteFnTest<WriteSuccessSummary, BatchWriteFnWithSummary> {

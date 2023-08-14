@@ -25,8 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.beam.sdk.annotations.Experimental;
-import org.apache.beam.sdk.annotations.Experimental.Kind;
 import org.apache.beam.sdk.schemas.FieldAccessDescriptor;
 import org.apache.beam.sdk.schemas.Schema;
 import org.apache.beam.sdk.schemas.Schema.Field;
@@ -40,9 +38,9 @@ import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.Row;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.MoreObjects;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -85,9 +83,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *                              .apply(Convert.to(Location.class));
  * }</pre>
  */
-@Experimental(Kind.SCHEMAS)
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class Select {
   public static <T> Fields<T> create() {
@@ -116,7 +113,7 @@ public class Select {
   }
 
   /**
-   * Selects every leaf-level field. This results in a a nested schema being flattened into a single
+   * Selects every leaf-level field. This results in a nested schema being flattened into a single
    * top-level schema. By default nested field names will be concatenated with _ characters, though
    * this can be overridden using {@link Flattened#keepMostNestedFieldName()} and {@link
    * Flattened#withFieldNameAs}.
@@ -133,7 +130,7 @@ public class Select {
 
     // TODO: This should be the same as resolved so that Beam knows which fields
     // are being accessed. Currently Beam only supports wildcard descriptors.
-    // Once BEAM-4457 is fixed, fix this.
+    // Once https://github.com/apache/beam/issues/18903 is fixed, fix this.
     @FieldAccess("selectFields")
     final FieldAccessDescriptor fieldAccess = FieldAccessDescriptor.withAllFields();
 

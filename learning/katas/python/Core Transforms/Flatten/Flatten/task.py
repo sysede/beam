@@ -18,13 +18,15 @@
 #   name: Flatten
 #   description: Task from katas that merges two PCollections of words into a single PCollection.
 #   multifile: false
-#   context_line: 29
+#   context_line: 31
 #   categories:
 #     - Flatten
+#   complexity: BASIC
+#   tags:
+#     - merge
+#     - strings
 
 import apache_beam as beam
-
-from log_elements import LogElements
 
 with beam.Pipeline() as p:
 
@@ -36,5 +38,4 @@ with beam.Pipeline() as p:
 
   ((wordsStartingWithA, wordsStartingWithB)
       | beam.Flatten()
-      | LogElements())
-
+      | beam.LogElements())

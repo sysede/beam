@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.io.aws2.options;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -45,10 +45,9 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.util.function.Supplier;
 import org.apache.beam.repackaged.core.org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.beam.sdk.annotations.Experimental;
-import org.apache.beam.sdk.annotations.Experimental.Kind;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSet;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -60,21 +59,24 @@ import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
+import software.amazon.awssdk.profiles.ProfileFileSystemSetting;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleWithWebIdentityCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleWithWebIdentityRequest;
 
 /**
  * A Jackson {@link Module} that registers a {@link JsonSerializer} and {@link JsonDeserializer} for
  * {@link AwsCredentialsProvider} and some subclasses. The serialized form is a JSON map.
  */
-@Experimental(Kind.SOURCE_SINK)
 @AutoService(Module.class)
 public class AwsModule extends SimpleModule {
   private static final String ACCESS_KEY_ID = "accessKeyId";
   private static final String SECRET_ACCESS_KEY = "secretAccessKey";
   private static final String SESSION_TOKEN = "sessionToken";
+  private static final String PROFILE_NAME = "profileName";
 
   public AwsModule() {
     super("AwsModule");
@@ -160,7 +162,9 @@ public class AwsModule extends SimpleModule {
       } else if (hasName(SystemPropertyCredentialsProvider.class, typeName)) {
         return SystemPropertyCredentialsProvider.create();
       } else if (hasName(ProfileCredentialsProvider.class, typeName)) {
-        return ProfileCredentialsProvider.create();
+        return json.has(PROFILE_NAME)
+            ? ProfileCredentialsProvider.create(getNotNull(json, PROFILE_NAME, typeName))
+            : ProfileCredentialsProvider.create();
       } else if (hasName(ContainerCredentialsProvider.class, typeName)) {
         return ContainerCredentialsProvider.builder().build();
       } else if (typeName.equals(StsAssumeRoleCredentialsProvider.class.getSimpleName())) {
@@ -169,6 +173,18 @@ public class AwsModule extends SimpleModule {
         return StsAssumeRoleCredentialsProvider.builder()
             .refreshRequest(jsonParser.getCodec().treeToValue(json, clazz).build())
             .stsClient(StsClient.create())
+            .build();
+      } else if (typeName.equals(
+          StsAssumeRoleWithWebIdentityCredentialsProvider.class.getSimpleName())) {
+        Class<? extends AssumeRoleWithWebIdentityRequest.Builder> clazz =
+            AssumeRoleWithWebIdentityRequest.serializableBuilderClass();
+        return StsAssumeRoleWithWebIdentityCredentialsProvider.builder()
+            .refreshRequest(jsonParser.getCodec().treeToValue(json, clazz).build())
+            .stsClient(
+                StsClient.builder()
+                    .region(Region.AWS_GLOBAL)
+                    .credentialsProvider(AnonymousCredentialsProvider.create())
+                    .build())
             .build();
       } else {
         throw new IOException(
@@ -195,7 +211,6 @@ public class AwsModule extends SimpleModule {
             DefaultCredentialsProvider.class,
             EnvironmentVariableCredentialsProvider.class,
             SystemPropertyCredentialsProvider.class,
-            ProfileCredentialsProvider.class,
             ContainerCredentialsProvider.class);
 
     @Override
@@ -228,12 +243,26 @@ public class AwsModule extends SimpleModule {
           jsonGenerator.writeStringField(ACCESS_KEY_ID, credentials.accessKeyId());
           jsonGenerator.writeStringField(SECRET_ACCESS_KEY, credentials.secretAccessKey());
         }
+      } else if (providerClass.equals(ProfileCredentialsProvider.class)) {
+        String profileName = (String) readField(credentialsProvider, PROFILE_NAME);
+        String envProfileName = ProfileFileSystemSetting.AWS_PROFILE.getStringValueOrThrow();
+        if (profileName != null && !profileName.equals(envProfileName)) {
+          jsonGenerator.writeStringField(PROFILE_NAME, profileName);
+        }
       } else if (providerClass.equals(StsAssumeRoleCredentialsProvider.class)) {
         Supplier<AssumeRoleRequest> reqSupplier =
             (Supplier<AssumeRoleRequest>)
                 readField(credentialsProvider, "assumeRoleRequestSupplier");
         serializer
             .findValueSerializer(AssumeRoleRequest.serializableBuilderClass())
+            .unwrappingSerializer(NameTransformer.NOP)
+            .serialize(reqSupplier.get().toBuilder(), jsonGenerator, serializer);
+      } else if (providerClass.equals(StsAssumeRoleWithWebIdentityCredentialsProvider.class)) {
+        Supplier<AssumeRoleWithWebIdentityRequest> reqSupplier =
+            (Supplier<AssumeRoleWithWebIdentityRequest>)
+                readField(credentialsProvider, "assumeRoleWithWebIdentityRequest");
+        serializer
+            .findValueSerializer(AssumeRoleWithWebIdentityRequest.serializableBuilderClass())
             .unwrappingSerializer(NameTransformer.NOP)
             .serialize(reqSupplier.get().toBuilder(), jsonGenerator, serializer);
       } else if (!SINGLETON_CREDENTIAL_PROVIDERS.contains(providerClass)) {

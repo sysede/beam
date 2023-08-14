@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"strings"
 
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/core/metrics"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/core/runtime/graphx"
@@ -35,7 +36,7 @@ import (
 )
 
 // Execute submits a pipeline as a Dataflow job.
-func Execute(ctx context.Context, raw *pipepb.Pipeline, opts *JobOptions, workerURL, jarURL, modelURL, endpoint string, async bool) (*dataflowPipelineResult, error) {
+func Execute(ctx context.Context, raw *pipepb.Pipeline, opts *JobOptions, workerURL, modelURL, endpoint string, async bool) (*dataflowPipelineResult, error) {
 	// (1) Upload Go binary to GCS.
 	presult := &dataflowPipelineResult{}
 
@@ -47,7 +48,12 @@ func Execute(ctx context.Context, raw *pipepb.Pipeline, opts *JobOptions, worker
 		} else {
 			// Cross-compile as last resort.
 
-			worker, err := runnerlib.BuildTempWorkerBinary(ctx)
+			var copts runnerlib.CompileOpts
+			if strings.HasPrefix(opts.MachineType, "t2a") {
+				copts.Arch = "arm64"
+			}
+
+			worker, err := runnerlib.BuildTempWorkerBinary(ctx, copts)
 			if err != nil {
 				return presult, err
 			}
@@ -75,41 +81,39 @@ func Execute(ctx context.Context, raw *pipepb.Pipeline, opts *JobOptions, worker
 		return presult, err
 	}
 
-	if opts.WorkerJar != "" {
-		log.Infof(ctx, "Staging Dataflow worker jar: %v", opts.WorkerJar)
+	// (2) Upload model to GCS
+	log.Info(ctx, proto.MarshalTextString(raw))
 
-		if _, err := stageFile(ctx, opts.Project, jarURL, opts.WorkerJar); err != nil {
-			return presult, err
-		}
-		log.Infof(ctx, "Staged worker jar: %v", jarURL)
-	}
-
-	// (2) Fixup and upload model to GCS
-
-	p, err := Fixup(raw)
-	if err != nil {
-		return presult, err
-	}
-	log.Info(ctx, proto.MarshalTextString(p))
-
-	if err := StageModel(ctx, opts.Project, modelURL, protox.MustEncode(p)); err != nil {
+	if err := StageModel(ctx, opts.Project, modelURL, protox.MustEncode(raw)); err != nil {
 		return presult, err
 	}
 	log.Infof(ctx, "Staged model pipeline: %v", modelURL)
 
 	// (3) Translate to v1b3 and submit
 
-	job, err := Translate(ctx, p, opts, workerURL, jarURL, modelURL)
+	job, err := Translate(ctx, raw, opts, workerURL, modelURL)
 	if err != nil {
 		return presult, err
 	}
 	PrintJob(ctx, job)
 
+	if opts.TemplateLocation != "" {
+		marshalled, err := job.MarshalJSON()
+		if err != nil {
+			return presult, err
+		}
+		if err := StageModel(ctx, opts.Project, opts.TemplateLocation, marshalled); err != nil {
+			return presult, err
+		}
+		log.Infof(ctx, "Template staged to %v", opts.TemplateLocation)
+		return nil, nil
+	}
+
 	client, err := NewClient(ctx, endpoint)
 	if err != nil {
 		return presult, err
 	}
-	upd, err := Submit(ctx, client, opts.Project, opts.Region, job)
+	upd, err := Submit(ctx, client, opts.Project, opts.Region, job, opts.Update)
 	// When in async mode, if we get a 409 because we've already submitted an actively running job with the same name
 	// just return the existing job as a convenience
 	if gErr, ok := err.(*googleapi.Error); async && ok && gErr.Code == 409 {
@@ -134,7 +138,7 @@ func Execute(ctx context.Context, raw *pipepb.Pipeline, opts *JobOptions, worker
 	// (4) Wait for completion.
 	err = WaitForCompletion(ctx, client, opts.Project, opts.Region, upd.Id)
 
-	res, presultErr := newDataflowPipelineResult(ctx, client, p, opts.Project, opts.Region, upd.Id)
+	res, presultErr := newDataflowPipelineResult(ctx, client, raw, opts.Project, opts.Region, upd.Id)
 	if presultErr != nil {
 		if err != nil {
 			return presult, errors.Wrap(err, presultErr.Error())

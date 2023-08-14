@@ -23,7 +23,7 @@ import static org.apache.beam.runners.core.metrics.MonitoringInfoEncodings.encod
 import static org.apache.beam.runners.core.metrics.MonitoringInfoEncodings.encodeInt64Counter;
 import static org.apache.beam.runners.core.metrics.MonitoringInfoEncodings.encodeInt64Distribution;
 import static org.apache.beam.runners.core.metrics.MonitoringInfoEncodings.encodeInt64Gauge;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -151,6 +151,12 @@ public class SimpleMonitoringInfoBuilder {
   /** Sets the MonitoringInfo label to the given name and value. */
   public SimpleMonitoringInfoBuilder setLabel(String labelName, String labelValue) {
     this.builder.putLabels(labelName, labelValue);
+    return this;
+  }
+
+  /** Adds all the labels to the MonitoringInfo overwriting any duplicated keys. */
+  public SimpleMonitoringInfoBuilder setLabels(Map<String, String> labels) {
+    this.builder.putAllLabels(labels);
     return this;
   }
 

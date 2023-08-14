@@ -20,14 +20,14 @@ package org.apache.beam.sdk.io.gcp.healthcare;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.io.gcp.healthcare.HttpHealthcareApiClient.HealthcareHttpException;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Throwables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Throwables;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 
 /** Class for capturing errors on IO operations on Google Cloud Healthcare APIs resources. */
 @DefaultCoder(HealthcareIOErrorCoder.class)
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class HealthcareIOError<T> {
   private T dataResource;

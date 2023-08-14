@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.io.kinesis;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -43,8 +43,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.Supplier;
-import org.apache.beam.sdk.annotations.Experimental;
-import org.apache.beam.sdk.annotations.Experimental.Kind;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.Read.Unbounded;
@@ -57,7 +55,7 @@ import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
 import org.apache.beam.sdk.values.TypeDescriptor;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
@@ -134,7 +132,7 @@ import org.slf4j.LoggerFactory;
  *  .apply( ... ) // other transformations
  * }</pre>
  *
- * <p>There’s also possibility to start reading using arbitrary point in time - in this case you
+ * <p>There's also possibility to start reading using arbitrary point in time - in this case you
  * need to provide {@link Instant} object:
  *
  * <pre>{@code
@@ -314,11 +312,15 @@ import org.slf4j.LoggerFactory;
  * <p>For more information about configuratiom parameters, see the <a
  * href="https://github.com/awslabs/amazon-kinesis-producer/blob/master/java/amazon-kinesis-producer-sample/default_config.properties">sample
  * of configuration file</a>.
+ *
+ * @deprecated Module <code>beam-sdks-java-io-kinesis</code> is deprecated and will be eventually
+ *     removed. Please migrate to {@link org.apache.beam.sdk.io.aws2.kinesis.KinesisIO} in module
+ *     <code>beam-sdks-java-io-amazon-web-services2</code>.
  */
-@Experimental(Kind.SOURCE_SINK)
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
+@Deprecated
 public final class KinesisIO {
 
   private static final Logger LOG = LoggerFactory.getLogger(KinesisIO.class);
@@ -655,6 +657,10 @@ public final class KinesisIO {
 
     @Override
     public PCollection<T> expand(PBegin input) {
+      LOG.warn(
+          "You are using a deprecated IO for Kinesis. Please migrate to module "
+              + "'org.apache.beam:beam-sdks-java-io-amazon-web-services2'.");
+
       Unbounded<KinesisRecord> unbounded =
           org.apache.beam.sdk.io.Read.from(
               new KinesisSource(
@@ -875,6 +881,10 @@ public final class KinesisIO {
 
     @Override
     public PDone expand(PCollection<byte[]> input) {
+      LOG.warn(
+          "You are using a deprecated IO for Kinesis. Please migrate to module "
+              + "'org.apache.beam:beam-sdks-java-io-amazon-web-services2'.");
+
       checkArgument(getStreamName() != null, "withStreamName() is required");
       checkArgument(
           (getPartitionKey() != null) || (getPartitioner() != null),

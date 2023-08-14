@@ -18,7 +18,7 @@
 package org.apache.beam.sdk.options;
 
 import static java.util.Locale.ROOT;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Maps.uniqueIndex;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Maps.uniqueIndex;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
@@ -74,13 +74,13 @@ import org.apache.beam.sdk.testing.ExpectedLogs;
 import org.apache.beam.sdk.testing.InterceptingUrlClassLoader;
 import org.apache.beam.sdk.testing.RestoreSystemProperties;
 import org.apache.beam.sdk.util.common.ReflectHelpers;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ArrayListMultimap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Collections2;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ListMultimap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Charsets;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ArrayListMultimap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Collections2;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ListMultimap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.Rule;
 import org.junit.Test;
@@ -92,7 +92,7 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link PipelineOptionsFactory}. */
 @RunWith(JUnit4.class)
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
 })
 public class PipelineOptionsFactoryTest {
   private static final String DEFAULT_RUNNER_NAME = "DirectRunner";
@@ -102,6 +102,18 @@ public class PipelineOptionsFactoryTest {
   @Rule public ExpectedException expectedException = ExpectedException.none();
   @Rule public TestRule restoreSystemProperties = new RestoreSystemProperties();
   @Rule public ExpectedLogs expectedLogs = ExpectedLogs.none(PipelineOptionsFactory.class);
+
+  @Test
+  public void testRevision() {
+    PipelineOptions options = PipelineOptionsFactory.create();
+    assertEquals(1, options.revision());
+    for (int i = 0; i < 10; i++) {
+      options.setJobName("other" + i);
+      // updates are idempotent, the 2nd call won't increment the revision
+      options.setJobName("other" + i);
+    }
+    assertEquals(11, options.revision());
+  }
 
   @Test
   public void testAutomaticRegistrationOfPipelineOptions() {
@@ -1915,7 +1927,7 @@ public class PipelineOptionsFactoryTest {
 
   @Test
   public void testAllFromPipelineOptions() {
-    // TODO: Java core test failing on windows, https://issues.apache.org/jira/browse/BEAM-10724
+    // TODO: Java core test failing on windows, https://github.com/apache/beam/issues/20466
     assumeFalse(SystemUtils.IS_OS_WINDOWS);
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage(

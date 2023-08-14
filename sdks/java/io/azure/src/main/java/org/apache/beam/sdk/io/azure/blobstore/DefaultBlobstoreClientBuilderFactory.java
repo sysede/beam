@@ -21,11 +21,11 @@ import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.common.StorageSharedKeyCredential;
 import org.apache.beam.sdk.io.azure.options.BlobstoreClientBuilderFactory;
 import org.apache.beam.sdk.io.azure.options.BlobstoreOptions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Strings;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Strings;
 
 /** Construct BlobServiceClientBuilder with given values of Azure client properties. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class DefaultBlobstoreClientBuilderFactory implements BlobstoreClientBuilderFactory {
 

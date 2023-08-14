@@ -18,18 +18,20 @@
 #   name: GroupByKey
 #   description: Task from katas that groups words by its first letter.
 #   multifile: false
-#   context_line: 29
+#   context_line: 32
 #   categories:
 #     - Combiners
+#   complexity: BASIC
+#   tags:
+#     - map
+#     - group
+#     - strings
 
 import apache_beam as beam
-
-from log_elements import LogElements
 
 with beam.Pipeline() as p:
 
   (p | beam.Create(['apple', 'ball', 'car', 'bear', 'cheetah', 'ant'])
      | beam.Map(lambda word: (word[0], word))
      | beam.GroupByKey()
-     | LogElements())
-
+     | beam.LogElements())

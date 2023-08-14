@@ -20,8 +20,6 @@ package org.apache.beam.fn.harness;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import org.apache.beam.sdk.annotations.Experimental;
-import org.apache.beam.sdk.annotations.Experimental.Kind;
 
 /**
  * A cache allows for the storage and retrieval of values which are associated with keys.
@@ -29,7 +27,6 @@ import org.apache.beam.sdk.annotations.Experimental.Kind;
  * <p>The cache allows for concurrent access and modification to its content and automatically
  * controls the amount of entries in the cache to stay within configured resource limits.
  */
-@Experimental(Kind.PORTABILITY)
 @ThreadSafe
 public interface Cache<K, V> {
   /**
@@ -38,7 +35,13 @@ public interface Cache<K, V> {
    *
    * <p>Types should consider implementing {@link org.apache.beam.sdk.util.Weighted} to not invoke
    * the overhead of using the {@link Caches#weigh default weigher} multiple times.
+   *
+   * <p>This interface may be invoked from any other thread that manipulates the cache causing this
+   * value to be shrunk. Implementers must ensure thread safety with respect to any side effects
+   * caused.
    */
+  @ThreadSafe
+  @FunctionalInterface
   interface Shrinkable<V> {
     /**
      * Returns a new object that is smaller than the object being evicted.

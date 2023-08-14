@@ -35,8 +35,8 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.POutput;
 import org.apache.beam.sdk.values.TaggedPValue;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +55,7 @@ public class ProjectionPushdownOptimizer {
    * PCollections/fields.
    *
    * <p>Currently only supports pushdown on {@link ProjectionProducer} instances that are applied
-   * directly to {@link PBegin} (https://issues.apache.org/jira/browse/BEAM-13658).
+   * directly to {@link PBegin} (https://github.com/apache/beam/issues/21359).
    */
   public static void optimize(Pipeline pipeline) {
     // Compute which Schema fields are (or conversely, are not) accessed in a pipeline.
@@ -95,7 +95,7 @@ public class ProjectionPushdownOptimizer {
     }
   }
 
-  // TODO(BEAM-13658) Support inputs other than PBegin.
+  // TODO(https://github.com/apache/beam/issues/21359) Support inputs other than PBegin.
   private static class PushdownOverrideFactory<
           OutputT extends POutput, TransformT extends PTransform<PBegin, OutputT>>
       implements PTransformOverrideFactory<PBegin, OutputT, TransformT> {

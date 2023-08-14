@@ -40,15 +40,54 @@ task("tidy") {
   }
 }
 
-task("test") {
-  group = "verification"
-  description = "Test the backend"
-  doLast {
-    exec {
-      executable("go")
-      args("test", "./...")
+val test by tasks.registering {
+    group = "verification"
+    description = "Test the backend"
+    doLast {
+        exec {
+            executable("go")
+            args("test", "./...")
+        }
     }
-  }
+}
+
+val testWithoutCache by tasks.registering {
+    group = "verification"
+    description = "Test the backend"
+    doFirst {
+        exec {
+            executable("go")
+            args("clean", "-testcache")
+        }
+    }
+    doLast {
+        exec {
+            executable("go")
+            args("test", "./...")
+        }
+    }
+}
+
+task("removeUnusedSnippet") {
+    doLast {
+      exec {
+         executable("go")
+         args("run", "cmd/remove_unused_snippets/remove_unused_snippets.go", "cleanup",
+          "-day_diff", System.getProperty("dayDiff"), "-project_id", System.getProperty("projectId"),
+          "-namespace", System.getProperty("namespace"))
+      }
+    }
+}
+
+task("removeSnippet") {
+    doLast {
+      exec {
+         executable("go")
+         args("run", "cmd/remove_unused_snippets/remove_unused_snippets.go", "remove",
+          "-snippet_id", System.getProperty("snippetId"), "-project_id", System.getProperty("projectId"),
+          "-namespace", System.getProperty("namespace"))
+      }
+    }
 }
 
 task("benchmarkPrecompiledObjects") {
@@ -74,10 +113,24 @@ task("benchmarkCodeProcessing") {
 }
 
 task("benchmark") {
-  dependsOn(":playground:backend:benchmarkPrecompiledObjects")
   dependsOn(":playground:backend:benchmarkCodeProcessing")
 }
 
+task("checkFormat") {
+  doLast {
+    val stdout = java.io.ByteArrayOutputStream()
+
+    exec {
+      executable("gofmt")
+      args("-l", "-e", "-d", ".")
+      standardOutput = stdout
+    }
+    if (stdout.size() > 0) {
+      println(stdout.toString())
+      throw GradleException("gofmt check indicates that there are unformatted files")
+    }
+  }
+}
 
 task("installLinter") {
   doLast {
@@ -93,13 +146,14 @@ task("runLint") {
   doLast {
     exec {
       executable("golangci-lint")
-      args("run", "cmd/server/...")      
+      args("run", "cmd/server/...")
     }
   }
 }
 
 task("precommit") {
   dependsOn(":playground:backend:runLint")
+  dependsOn(":playground:backend:checkFormat")
   dependsOn(":playground:backend:tidy")
   dependsOn(":playground:backend:test")
   dependsOn(":playground:backend:benchmark")

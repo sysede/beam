@@ -16,8 +16,6 @@
 package environment
 
 import (
-	pb "beam.apache.org/playground/backend/internal/api/v1"
-	"beam.apache.org/playground/backend/internal/logger"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,40 +26,59 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	pb "beam.apache.org/playground/backend/internal/api/v1"
+	"beam.apache.org/playground/backend/internal/logger"
 )
 
 const (
-	serverIpKey                   = "SERVER_IP"
-	serverPortKey                 = "SERVER_PORT"
-	beamSdkKey                    = "BEAM_SDK"
-	workingDirKey                 = "APP_WORK_DIR"
-	preparedModDirKey             = "PREPARED_MOD_DIR"
-	numOfParallelJobsKey          = "NUM_PARALLEL_JOBS"
-	cacheTypeKey                  = "CACHE_TYPE"
-	cacheAddressKey               = "CACHE_ADDRESS"
-	beamPathKey                   = "BEAM_PATH"
-	cacheKeyExpirationTimeKey     = "KEY_EXPIRATION_TIME"
-	pipelineExecuteTimeoutKey     = "PIPELINE_EXPIRATION_TIMEOUT"
-	protocolTypeKey               = "PROTOCOL_TYPE"
-	launchSiteKey                 = "LAUNCH_SITE"
-	projectIdKey                  = "GOOGLE_CLOUD_PROJECT"
-	pipelinesFolderKey            = "PIPELINES_FOLDER_NAME"
-	defaultPipelinesFolder        = "executable_files"
-	defaultLaunchSite             = "local"
-	defaultProtocol               = "HTTP"
-	defaultIp                     = "localhost"
-	defaultPort                   = 8080
-	defaultSdk                    = pb.Sdk_SDK_JAVA
-	defaultBeamJarsPath           = "/opt/apache/beam/jars/*"
-	defaultCacheType              = "local"
-	defaultCacheAddress           = "localhost:6379"
-	defaultCacheKeyExpirationTime = time.Minute * 15
-	defaultPipelineExecuteTimeout = time.Minute * 10
-	jsonExt                       = ".json"
-	configFolderName              = "configs"
-	defaultNumOfParallelJobs      = 20
-	bucketNameKey                 = "BUCKET_NAME"
-	defaultBucketName             = "playground-precompiled-objects"
+	serverIpKey                              = "SERVER_IP"
+	serverPortKey                            = "SERVER_PORT"
+	beamSdkKey                               = "BEAM_SDK"
+	beamVersionKey                           = "BEAM_VERSION"
+	workingDirKey                            = "APP_WORK_DIR"
+	preparedModDirKey                        = "PREPARED_MOD_DIR"
+	numOfParallelJobsKey                     = "NUM_PARALLEL_JOBS"
+	cacheTypeKey                             = "CACHE_TYPE"
+	cacheAddressKey                          = "CACHE_ADDRESS"
+	beamPathKey                              = "BEAM_PATH"
+	cacheKeyExpirationTimeKey                = "KEY_EXPIRATION_TIME"
+	pipelineExecuteTimeoutKey                = "PIPELINE_EXPIRATION_TIMEOUT"
+	protocolTypeKey                          = "PROTOCOL_TYPE"
+	launchSiteKey                            = "LAUNCH_SITE"
+	projectIdKey                             = "GOOGLE_CLOUD_PROJECT"
+	pipelinesFolderKey                       = "PIPELINES_FOLDER_NAME"
+	defaultPipelinesFolder                   = "executable_files"
+	defaultLaunchSite                        = "local"
+	defaultProtocol                          = "HTTP"
+	defaultIp                                = "localhost"
+	defaultPort                              = 8080
+	defaultSdk                               = pb.Sdk_SDK_UNSPECIFIED
+	defaultBeamVersion                       = "<unknown>"
+	defaultBeamJarsPath                      = "/opt/apache/beam/jars/*"
+	defaultDatasetsPath                      = "/opt/playground/backend/datasets"
+	defaultKafkaEmulatorExecutablePath       = "/opt/playground/backend/kafka-emulator/beam-playground-kafka-emulator.jar"
+	defaultCacheType                         = "local"
+	defaultCacheAddress                      = "localhost:6379"
+	defaultCacheKeyExpirationTime            = time.Minute * 15
+	defaultPipelineExecuteTimeout            = time.Minute * 10
+	jsonExt                                  = ".json"
+	configFolderName                         = "configs"
+	defaultNumOfParallelJobs                 = 20
+	SDKConfigPathKey                         = "SDK_CONFIG"
+	defaultSDKConfigPath                     = "../sdks.yaml"
+	propertyPathKey                          = "PROPERTY_PATH"
+	datasetsPathKey                          = "DATASETS_PATH"
+	kafkaEmulatorExecutablePathKey           = "KAFKA_EMULATOR_EXECUTABLE_PATH"
+	defaultPropertyPath                      = "."
+	cacheRequestTimeoutKey                   = "CACHE_REQUEST_TIMEOUT"
+	defaultCacheRequestTimeout               = time.Second * 5
+	cleanupSnippetsFunctionsUrlKey           = "CLEANUP_SNIPPETS_FUNCTIONS_URL"
+	defaultCleanupSnippetsFunctionsUrl       = "http://cleanup_snippets:8080/"
+	putSnippetFunctionsUrlKey                = "PUT_SNIPPET_FUNCTIONS_URL"
+	defaultPutSnippetFunctionsUrl            = "http://put_snippet:8080/"
+	incrementSnippetViewsFunctionsUrlKey     = "INCREMENT_SNIPPET_VIEWS_FUNCTIONS_URL"
+	defaultIncrementSnippetViewsFunctionsUrl = "http://increment_snippet_views:8080/"
 )
 
 // Environment operates with environment structures: NetworkEnvs, BeamEnvs, ApplicationEnvs
@@ -90,38 +107,50 @@ func NewEnvironment(networkEnvs NetworkEnvs, beamEnvs BeamEnvs, appEnvs Applicat
 // GetApplicationEnvsFromOsEnvs returns ApplicationEnvs.
 // Lookups in os environment variables and tries to take values for all (exclude working dir) ApplicationEnvs parameters.
 // In case some value doesn't exist sets default values:
-// 	- pipeline execution timeout: 10 minutes
-//	- cache expiration time: 15 minutes
-//	- type of cache: local
-//	- cache address: localhost:6379
+//   - pipeline execution timeout: 10 minutes
+//   - cache expiration time: 15 minutes
+//   - type of cache: local
+//   - cache address: localhost:6379
+//
 // If os environment variables don't contain a value for app working dir - returns error.
 func GetApplicationEnvsFromOsEnvs() (*ApplicationEnvs, error) {
-	pipelineExecuteTimeout := defaultPipelineExecuteTimeout
-	cacheExpirationTime := defaultCacheKeyExpirationTime
+	pipelineExecuteTimeout := getEnvAsDuration(pipelineExecuteTimeoutKey, defaultPipelineExecuteTimeout, "couldn't convert provided pipeline execute timeout. Using default %s\n")
+	cacheExpirationTime := getEnvAsDuration(cacheKeyExpirationTimeKey, defaultCacheKeyExpirationTime, "couldn't convert provided cache expiration time. Using default %s\n")
 	cacheType := getEnv(cacheTypeKey, defaultCacheType)
 	cacheAddress := getEnv(cacheAddressKey, defaultCacheAddress)
 	launchSite := getEnv(launchSiteKey, defaultLaunchSite)
 	projectId := os.Getenv(projectIdKey)
 	pipelinesFolder := getEnv(pipelinesFolderKey, defaultPipelinesFolder)
-	bucketName := getEnv(bucketNameKey, defaultBucketName)
-
-	if value, present := os.LookupEnv(cacheKeyExpirationTimeKey); present {
-		if converted, err := time.ParseDuration(value); err == nil {
-			cacheExpirationTime = converted
-		} else {
-			log.Printf("couldn't convert provided cache expiration time. Using default %s\n", defaultCacheKeyExpirationTime)
-		}
-	}
-	if value, present := os.LookupEnv(pipelineExecuteTimeoutKey); present {
-		if converted, err := time.ParseDuration(value); err == nil {
-			pipelineExecuteTimeout = converted
-		} else {
-			log.Printf("couldn't convert provided pipeline execute timeout. Using default %s\n", defaultPipelineExecuteTimeout)
-		}
-	}
+	sdkConfigPath := getEnv(SDKConfigPathKey, defaultSDKConfigPath)
+	propertyPath := getEnv(propertyPathKey, defaultPropertyPath)
+	datasetsPath := getEnv(datasetsPathKey, defaultDatasetsPath)
+	kafkaEmulatorExecutablePath := getEnv(kafkaEmulatorExecutablePathKey, defaultKafkaEmulatorExecutablePath)
+	cacheRequestTimeout := getEnvAsDuration(cacheRequestTimeoutKey, defaultCacheRequestTimeout, "couldn't convert provided cache request timeout. Using default %s\n")
+	cleanupSnippetsFunctionsUrl := getEnv(cleanupSnippetsFunctionsUrlKey, defaultCleanupSnippetsFunctionsUrl)
+	putSnippetFunctionsUrl := getEnv(putSnippetFunctionsUrlKey, defaultPutSnippetFunctionsUrl)
+	incrementSnippetViewsFunctionsUrl := getEnv(incrementSnippetViewsFunctionsUrlKey, defaultIncrementSnippetViewsFunctionsUrl)
 
 	if value, present := os.LookupEnv(workingDirKey); present {
-		return NewApplicationEnvs(value, launchSite, projectId, pipelinesFolder, NewCacheEnvs(cacheType, cacheAddress, cacheExpirationTime), pipelineExecuteTimeout, bucketName), nil
+		return NewApplicationEnvs(
+			value,
+			launchSite,
+			projectId,
+			pipelinesFolder,
+			sdkConfigPath,
+			propertyPath,
+			kafkaEmulatorExecutablePath,
+			datasetsPath,
+			cleanupSnippetsFunctionsUrl,
+			putSnippetFunctionsUrl,
+			incrementSnippetViewsFunctionsUrl,
+			NewCacheEnvs(
+				cacheType,
+				cacheAddress,
+				cacheExpirationTime,
+			),
+			pipelineExecuteTimeout,
+			cacheRequestTimeout,
+		), nil
 	}
 	return nil, errors.New("APP_WORK_DIR env should be provided with os.env")
 }
@@ -129,8 +158,8 @@ func GetApplicationEnvsFromOsEnvs() (*ApplicationEnvs, error) {
 // GetNetworkEnvsFromOsEnvs returns NetworkEnvs.
 // Lookups in os environment variables and takes values for ip and port.
 // In case some value doesn't exist sets default values:
-//  - ip:	localhost
-//  - port: 8080
+//   - ip:	localhost
+//   - port: 8080
 func GetNetworkEnvsFromOsEnvs() (*NetworkEnvs, error) {
 	ip := getEnv(serverIpKey, defaultIp)
 	port := defaultPort
@@ -152,20 +181,9 @@ func GetNetworkEnvsFromOsEnvs() (*NetworkEnvs, error) {
 func ConfigureBeamEnvs(workDir string) (*BeamEnvs, error) {
 	sdk := pb.Sdk_SDK_UNSPECIFIED
 	preparedModDir, modDirExist := os.LookupEnv(preparedModDirKey)
+	numOfParallelJobs := getEnvAsInt(numOfParallelJobsKey, defaultNumOfParallelJobs)
 
-	numOfParallelJobs := defaultNumOfParallelJobs
-	if value, present := os.LookupEnv(numOfParallelJobsKey); present {
-		convertedValue, err := strconv.Atoi(value)
-		if err != nil {
-			logger.Errorf("Incorrect value for %s. Should be integer. Will be used default value: %d", numOfParallelJobsKey, defaultNumOfParallelJobs)
-		} else {
-			if convertedValue <= 0 {
-				logger.Errorf("Incorrect value for %s. Should be a positive integer value but it is %d. Will be used default value: %d", numOfParallelJobsKey, convertedValue, defaultNumOfParallelJobs)
-			} else {
-				numOfParallelJobs = convertedValue
-			}
-		}
-	}
+	beamVersion := getEnv(beamVersionKey, defaultBeamVersion)
 
 	if value, present := os.LookupEnv(beamSdkKey); present {
 
@@ -184,14 +202,14 @@ func ConfigureBeamEnvs(workDir string) (*BeamEnvs, error) {
 		}
 	}
 	if sdk == pb.Sdk_SDK_UNSPECIFIED {
-		return NewBeamEnvs(sdk, nil, preparedModDir, numOfParallelJobs), nil
+		return NewBeamEnvs(sdk, beamVersion, nil, preparedModDir, numOfParallelJobs), nil
 	}
 	configPath := filepath.Join(workDir, configFolderName, sdk.String()+jsonExt)
 	executorConfig, err := createExecutorConfig(sdk, configPath)
 	if err != nil {
 		return nil, err
 	}
-	return NewBeamEnvs(sdk, executorConfig, preparedModDir, numOfParallelJobs), nil
+	return NewBeamEnvs(sdk, beamVersion, executorConfig, preparedModDir, numOfParallelJobs), nil
 }
 
 // createExecutorConfig creates ExecutorConfig that corresponds to specific Apache Beam SDK.
@@ -247,6 +265,37 @@ func getConfigFromJson(configPath string) (*ExecutorConfig, error) {
 func getEnv(key, defaultValue string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
+	}
+	return defaultValue
+}
+
+// getEnvAsInt returns an environment variable or default value as integer
+func getEnvAsInt(key string, defaultValue int) int {
+	if value, present := os.LookupEnv(key); present {
+		convertedValue, err := strconv.Atoi(value)
+		if err != nil {
+			logger.Errorf("Incorrect value for %s. Should be integer. Will be used default value: %d", key, defaultValue)
+			return defaultValue
+		} else {
+			if convertedValue <= 0 {
+				logger.Errorf("Incorrect value for %s. Should be a positive integer value but it is %d. Will be used default value: %d", key, convertedValue, defaultValue)
+				return defaultValue
+			} else {
+				return convertedValue
+			}
+		}
+	}
+	return defaultValue
+}
+
+// getEnvAsDuration returns an environment variable or default value as duration
+func getEnvAsDuration(key string, defaultValue time.Duration, errMsg string) time.Duration {
+	if value, present := os.LookupEnv(key); present {
+		if converted, err := time.ParseDuration(value); err == nil {
+			return converted
+		} else {
+			log.Printf(errMsg, defaultValue)
+		}
 	}
 	return defaultValue
 }

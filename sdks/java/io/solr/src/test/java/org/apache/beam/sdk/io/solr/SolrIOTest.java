@@ -36,7 +36,7 @@ import org.apache.beam.sdk.transforms.Count;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFnTester;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.BaseEncoding;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -67,7 +67,7 @@ import org.slf4j.LoggerFactory;
 @SolrTestCaseJ4.SuppressSSL
 @RunWith(RandomizedRunner.class)
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
 })
 public class SolrIOTest extends SolrCloudTestCase {
   private static final Logger LOG = LoggerFactory.getLogger(SolrIOTest.class);
@@ -275,7 +275,7 @@ public class SolrIOTest extends SolrCloudTestCase {
     try {
       pipeline.run();
     } catch (final Pipeline.PipelineExecutionException e) {
-      // Hack: await all worker threads completing (BEAM-4040)
+      // Hack: await all worker threads completing (https://github.com/apache/beam/issues/18893)
       int waitAttempts = 30; // defensive coding
       while (namedThreadIsAlive("direct-runner-worker") && waitAttempts-- >= 0) {
         LOG.info("Pausing to allow direct-runner-worker threads to finish");

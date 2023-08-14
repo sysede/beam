@@ -20,7 +20,7 @@ package org.apache.beam.sdk.transforms;
 import static java.lang.Thread.sleep;
 import static org.apache.beam.sdk.transforms.DoFn.ProcessContinuation.resume;
 import static org.apache.beam.sdk.transforms.DoFn.ProcessContinuation.stop;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.junit.Assert.assertEquals;
@@ -74,8 +74,8 @@ import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.TimestampedValue;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Ordering;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Ordering;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
 import org.joda.time.MutableDateTime;
@@ -83,6 +83,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -91,9 +92,11 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
 })
 public class SplittableDoFnTest implements Serializable {
+
+  @Rule public transient Timeout globalTimeout = Timeout.seconds(1200);
 
   static class PairStringWithIndexToLengthBase extends DoFn<String, KV<String, Integer>> {
     @ProcessElement
@@ -784,7 +787,7 @@ public class SplittableDoFnTest implements Serializable {
   }
 
   @Test(timeout = 15000L)
-  @Ignore("https://issues.apache.org/jira/browse/BEAM-6354")
+  @Ignore("https://github.com/apache/beam/issues/19344")
   @Category({ValidatesRunner.class, UsesBoundedSplittableParDo.class, UsesTestStream.class})
   public void testLateData() {
 
@@ -1031,7 +1034,7 @@ public class SplittableDoFnTest implements Serializable {
     p.run();
   }
 
-  // TODO (https://issues.apache.org/jira/browse/BEAM-988): Test that Splittable DoFn
+  // TODO (https://github.com/apache/beam/issues/18091): Test that Splittable DoFn
   // emits output immediately (i.e. has a pass-through trigger) regardless of input's
   // windowing/triggering strategy.
 }

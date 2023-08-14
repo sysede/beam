@@ -28,6 +28,7 @@ import uuid
 import weakref
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
 from typing import DefaultDict
 from typing import Dict
 from typing import Generic
@@ -36,6 +37,7 @@ from typing import Iterator
 from typing import List
 from typing import MutableMapping
 from typing import Optional
+from typing import Sequence
 from typing import Set
 from typing import Tuple
 from typing import TypeVar
@@ -425,16 +427,18 @@ class _ProcessingQueueManager(object):
     def enque(self, elm: Tuple[QUEUE_KEY_TYPE, DataInput]) -> None:
       key = elm[0]
       incoming_inputs: DataInput = elm[1]
+      if not incoming_inputs:
+        return
       if key in self._keyed_elements:
         existing_inputs = self._keyed_elements[key][1]
         for pcoll in incoming_inputs.data:
-          if incoming_inputs.data[pcoll] and pcoll in existing_inputs.data:
+          if incoming_inputs.data[pcoll] and existing_inputs.data.get(pcoll):
             existing_inputs.data[pcoll].extend(incoming_inputs.data[pcoll])
           elif incoming_inputs.data[pcoll]:
             existing_inputs.data[pcoll] = incoming_inputs.data[pcoll]
         for timer_family in (incoming_inputs.timers or []):
-          if incoming_inputs.timers[
-              timer_family] and timer_family in existing_inputs.timers:
+          if (incoming_inputs.timers[timer_family] and
+              existing_inputs.timers.get(timer_family)):
             existing_inputs.timers[timer_family].extend(
                 incoming_inputs.timers[timer_family])
           elif incoming_inputs.timers[timer_family]:
@@ -496,7 +500,7 @@ class GenericMergingWindowFn(window.WindowFn):
     self._counter = 0
     # Lazily created in make_process_bundle_descriptor()
     self._process_bundle_descriptor = None
-    self._bundle_processor_id = None  # type: Optional[str]
+    self._bundle_processor_id = ''  # type: str
     self.windowed_input_coder_impl = None  # type: Optional[CoderImpl]
     self.windowed_output_coder_impl = None  # type: Optional[CoderImpl]
 
@@ -673,7 +677,7 @@ class GenericMergingWindowFn(window.WindowFn):
                 windowing_strategy_id=global_windowing_strategy_id,
                 coder_id=output_coder_id),
         },
-        coders=coders,  # type: ignore
+        coders=coders,
         windowing_strategies={
             global_windowing_strategy_id: global_windowing_strategy_proto,
         },
@@ -702,7 +706,8 @@ class FnApiRunnerExecutionContext(object):
                safe_coders: translations.SafeCoderMapping,
                data_channel_coders: Dict[str, str],
                num_workers: int,
-               uses_teststream: bool = False
+               uses_teststream: bool = False,
+               split_managers = ()  # type: Sequence[Tuple[str, Callable[[int], Iterable[float]]]]
               ) -> None:
     """
     :param worker_handler_manager: This class manages the set of worker
@@ -722,6 +727,7 @@ class FnApiRunnerExecutionContext(object):
     self.safe_coders = safe_coders
     self.data_channel_coders = data_channel_coders
     self.num_workers = num_workers
+    self.split_managers = split_managers
     # TODO(pabloem): Move Clock classes out of DirectRunner and into FnApiRnr
     self.clock: Union[TestClock, RealClock] = (
         TestClock() if uses_teststream else RealClock())
@@ -758,7 +764,10 @@ class FnApiRunnerExecutionContext(object):
       num_workers: Optional[int] = None) -> 'BundleContextManager':
     if stage.name not in self._stage_managers:
       self._stage_managers[stage.name] = BundleContextManager(
-          self, stage, num_workers or self.num_workers)
+          self,
+          stage,
+          num_workers or self.num_workers,
+          split_managers=self.split_managers)
     return self._stage_managers[stage.name]
 
   def _compute_pipeline_dictionaries(self) -> None:
@@ -1003,12 +1012,14 @@ class BundleContextManager(object):
                execution_context, # type: FnApiRunnerExecutionContext
                stage,  # type: translations.Stage
                num_workers,  # type: int
+               split_managers,  # type: Sequence[Tuple[str, Callable[[int], Iterable[float]]]]
               ):
     # type: (...) -> None
     self.execution_context = execution_context
     self.stage = stage
     self.bundle_uid = self.execution_context.next_uid()
     self.num_workers = num_workers
+    self.split_managers = split_managers
 
     # Properties that are lazily initialized
     self._process_bundle_descriptor = None  # type: Optional[beam_fn_api_pb2.ProcessBundleDescriptor]

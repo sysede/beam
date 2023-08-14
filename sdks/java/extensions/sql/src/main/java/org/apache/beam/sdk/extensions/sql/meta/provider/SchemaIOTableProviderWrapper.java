@@ -23,7 +23,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.Serializable;
 import java.util.List;
-import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.annotations.Internal;
 import org.apache.beam.sdk.extensions.sql.impl.BeamTableStatistics;
 import org.apache.beam.sdk.extensions.sql.meta.BaseBeamTable;
@@ -47,13 +46,12 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.POutput;
 import org.apache.beam.sdk.values.Row;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 
 /** A general {@link TableProvider} for IOs for consumption by Beam SQL. */
 @Internal
-@Experimental
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public abstract class SchemaIOTableProviderWrapper extends InMemoryMetaTableProvider
     implements Serializable {
@@ -133,7 +131,7 @@ public abstract class SchemaIOTableProviderWrapper extends InMemoryMetaTableProv
       if (!(filters instanceof DefaultTableFilter)) {
         throw new UnsupportedOperationException(
             String.format(
-                "Filter pushdown is not yet supported in %s. BEAM-12663",
+                "Filter pushdown is not yet supported in %s. https://github.com/apache/beam/issues/21001",
                 SchemaIOTableWrapper.class));
       }
       if (!fieldNames.isEmpty()) {

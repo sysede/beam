@@ -20,6 +20,7 @@ package org.apache.beam.sdk.io.gcp.spanner.changestreams.action;
 import static org.apache.beam.sdk.io.gcp.spanner.changestreams.model.PartitionMetadata.State.CREATED;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyObject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,7 +43,7 @@ import org.apache.beam.sdk.io.gcp.spanner.changestreams.util.TestTransactionAnsw
 import org.apache.beam.sdk.transforms.DoFn.ProcessContinuation;
 import org.apache.beam.sdk.transforms.splittabledofn.ManualWatermarkEstimator;
 import org.apache.beam.sdk.transforms.splittabledofn.RestrictionTracker;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets;
 import org.joda.time.Instant;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,7 +66,8 @@ public class ChildPartitionsRecordActionTest {
     tracker = mock(RestrictionTracker.class);
     watermarkEstimator = mock(ManualWatermarkEstimator.class);
 
-    when(dao.runInTransaction(any())).thenAnswer(new TestTransactionAnswer(transaction));
+    when(dao.runInTransaction(any(), anyObject()))
+        .thenAnswer(new TestTransactionAnswer(transaction));
   }
 
   @Test

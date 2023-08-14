@@ -16,6 +16,7 @@
 
 import typing
 import unittest
+import warnings
 
 import pandas as pd
 
@@ -132,7 +133,9 @@ class TransformTest(unittest.TestCase):
     })
 
     def median_sum_fn(x):
-      return (x.foo + x.bar).median()
+      with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Mean of empty slice")
+        return (x.foo + x.bar).median()
 
     describe = lambda df: df.describe()
 
@@ -167,6 +170,8 @@ class TransformTest(unittest.TestCase):
       a = pd.Series([1, 2, 6])
       self.run_scenario(a, lambda a: a.agg(sum))
       self.run_scenario(a, lambda a: a / a.agg(sum))
+      self.run_scenario(a, lambda a: a / (a.max() - a.min()))
+      self.run_scenario(a, lambda a: a / (a.sum() - 1))
 
       # Tests scalar being used as an input to a downstream stage.
       df = pd.DataFrame({'key': ['a', 'a', 'b'], 'val': [1, 2, 6]})
@@ -208,8 +213,8 @@ class TransformTest(unittest.TestCase):
     with beam.Pipeline() as p:
       result = (
           p
-          | beam.Create([(u'Falcon', 380.), (u'Falcon', 370.), (u'Parrot', 24.),
-                         (u'Parrot', 26.)])
+          | beam.Create([('Falcon', 380.), ('Falcon', 370.), ('Parrot', 24.),
+                         ('Parrot', 26.)])
           | beam.Map(lambda tpl: beam.Row(Animal=tpl[0], Speed=tpl[1]))
           | transforms.DataframeTransform(
               lambda df: df.groupby('Animal').mean(), include_indexes=True))
@@ -220,8 +225,8 @@ class TransformTest(unittest.TestCase):
     with beam.Pipeline() as p:
       df = convert.to_dataframe(
           p
-          | beam.Create([(u'Falcon', 380.), (u'Falcon', 370.), (
-              u'Parrot', 24.), (u'Parrot', 26.)])
+          | beam.Create([('Falcon', 380.), ('Falcon', 370.), ('Parrot', 24.), (
+              'Parrot', 26.)])
           | beam.Map(lambda tpl: beam.Row(Animal=tpl[0], Speed=tpl[1])))
 
       result = convert.to_pcollection(
@@ -255,8 +260,8 @@ class TransformTest(unittest.TestCase):
     with beam.Pipeline() as p:
       result = (
           p
-          | beam.Create([(u'Falcon', 380.), (u'Falcon', 370.), (u'Parrot', 24.),
-                         (u'Parrot', 26.)])
+          | beam.Create([('Falcon', 380.), ('Falcon', 370.), ('Parrot', 24.),
+                         ('Parrot', 26.)])
           | beam.Map(lambda tpl: beam.Row(Animal=tpl[0], Speed=tpl[1]))
           | transforms.DataframeTransform(lambda df: df.Animal))
 

@@ -18,6 +18,7 @@
 package org.apache.beam.sdk.io.gcp.spanner;
 
 import com.google.api.gax.longrunning.OperationFuture;
+import com.google.cloud.spanner.BatchClient;
 import com.google.cloud.spanner.Database;
 import com.google.cloud.spanner.DatabaseAdminClient;
 import com.google.cloud.spanner.DatabaseClient;
@@ -36,20 +37,28 @@ import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.testing.TestPipelineOptions;
 import org.apache.beam.sdk.transforms.Count;
+import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.MapElements;
+import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.SerializableFunction;
+import org.apache.beam.sdk.transforms.SimpleFunction;
+import org.apache.beam.sdk.transforms.View;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.TypeDescriptor;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -60,6 +69,7 @@ public class SpannerReadIT {
   private static final int MAX_DB_NAME_LENGTH = 30;
 
   @Rule public final transient TestPipeline p = TestPipeline.create();
+  @Rule public transient ExpectedException thrown = ExpectedException.none();
 
   /** Pipeline options for this test. */
   public interface SpannerTestPipelineOptions extends TestPipelineOptions {
@@ -129,6 +139,7 @@ public class SpannerReadIT {
                     + "  Value         STRING(MAX),"
                     + ") PRIMARY KEY (Key)"));
     op.get();
+    // PG-dialect databases need 2-steps to create: Create DB then update DDL.
     databaseAdminClient
         .createDatabase(
             databaseAdminClient
@@ -175,7 +186,101 @@ public class SpannerReadIT {
                 .withTransaction(tx));
     PAssert.thatSingleton(output.apply("Count rows", Count.<Struct>globally())).isEqualTo(5L);
 
-    p.run();
+    p.run().waitUntilFinish();
+  }
+
+  @Test
+  @Ignore("https://github.com/apache/beam/issues/26208 Test stuck indefinitely")
+  public void testReadWithDataBoost() throws Exception {
+
+    SpannerConfig spannerConfig = createSpannerConfig();
+    spannerConfig = spannerConfig.withDataBoostEnabled(StaticValueProvider.of(true));
+
+    PCollectionView<Transaction> tx =
+        p.apply(
+            "Create tx",
+            SpannerIO.createTransaction()
+                .withSpannerConfig(spannerConfig)
+                .withTimestampBound(TimestampBound.strong()));
+
+    PCollection<Struct> output =
+        p.apply(
+            "read db",
+            SpannerIO.read()
+                .withSpannerConfig(spannerConfig)
+                .withTable(options.getTable())
+                .withColumns("Key", "Value")
+                .withTransaction(tx));
+    PAssert.thatSingleton(output.apply("Count rows", Count.<Struct>globally())).isEqualTo(5L);
+
+    p.run().waitUntilFinish();
+  }
+
+  @Test
+  public void testReadFailsBadTable() throws Exception {
+
+    thrown.expect(new SpannerWriteIT.StackTraceContainsString("SpannerException"));
+    thrown.expect(new SpannerWriteIT.StackTraceContainsString("NOT_FOUND: Table not found"));
+
+    SpannerConfig spannerConfig = createSpannerConfig();
+
+    PCollectionView<Transaction> tx =
+        p.apply(
+            "Create tx",
+            SpannerIO.createTransaction()
+                .withSpannerConfig(spannerConfig)
+                .withTimestampBound(TimestampBound.strong()));
+    p.apply(
+        "read db",
+        SpannerIO.read()
+            .withSpannerConfig(spannerConfig)
+            .withTable("IncorrectTableName")
+            .withColumns("Key", "Value")
+            .withTransaction(tx));
+    p.run().waitUntilFinish();
+  }
+
+  private static class CloseTransactionFn extends SimpleFunction<Transaction, Transaction> {
+    private final SpannerConfig spannerConfig;
+
+    private CloseTransactionFn(SpannerConfig spannerConfig) {
+      this.spannerConfig = spannerConfig;
+    }
+
+    @Override
+    public Transaction apply(Transaction tx) {
+      BatchClient batchClient = SpannerAccessor.getOrCreate(spannerConfig).getBatchClient();
+      batchClient.batchReadOnlyTransaction(tx.transactionId()).cleanup();
+      return tx;
+    }
+  }
+
+  @Test
+  public void testReadFailsBadSession() throws Exception {
+
+    thrown.expect(new SpannerWriteIT.StackTraceContainsString("SpannerException"));
+    thrown.expect(new SpannerWriteIT.StackTraceContainsString("NOT_FOUND: Session not found"));
+
+    SpannerConfig spannerConfig = createSpannerConfig();
+
+    // This creates a transaction then closes the session.
+    // The (closed) transaction is then passed to SpannerIO.read() and should
+    // raise SessionNotFound errors.
+    PCollectionView<Transaction> tx =
+        p.apply("Transaction seed", Create.of(1))
+            .apply(
+                "Create transaction",
+                ParDo.of(new CreateTransactionFn(spannerConfig, TimestampBound.strong())))
+            .apply("Close Transaction", MapElements.via(new CloseTransactionFn(spannerConfig)))
+            .apply("As PCollectionView", View.asSingleton());
+    p.apply(
+        "read db",
+        SpannerIO.read()
+            .withSpannerConfig(spannerConfig)
+            .withTable(options.getTable())
+            .withColumns("Key", "Value")
+            .withTransaction(tx));
+    p.run().waitUntilFinish();
   }
 
   @Test
@@ -215,6 +320,84 @@ public class SpannerReadIT {
                 .withTransaction(pgTx));
     PAssert.thatSingleton(pgOutput.apply("Count PG rows", Count.globally())).isEqualTo(5L);
     p.run();
+  }
+
+  @Test
+  public void testQueryWithTimeoutError() throws Exception {
+    thrown.expect(new SpannerWriteIT.StackTraceContainsString("SpannerException"));
+    thrown.expect(new SpannerWriteIT.StackTraceContainsString("DEADLINE_EXCEEDED"));
+
+    SpannerConfig spannerConfig = createSpannerConfig();
+    spannerConfig =
+        spannerConfig.withPartitionQueryTimeout(StaticValueProvider.of(Duration.millis(1)));
+
+    PCollectionView<Transaction> tx =
+        p.apply(
+            "Create tx",
+            SpannerIO.createTransaction()
+                .withSpannerConfig(spannerConfig)
+                .withTimestampBound(TimestampBound.strong()));
+
+    p.apply(
+        "Read db",
+        SpannerIO.read()
+            .withSpannerConfig(spannerConfig)
+            .withQuery("SELECT * FROM " + options.getTable())
+            .withTransaction(tx));
+
+    p.run().waitUntilFinish();
+  }
+
+  @Test
+  public void testQueryWithTimeoutErrorPG() throws Exception {
+    thrown.expect(new SpannerWriteIT.StackTraceContainsString("SpannerException"));
+    thrown.expect(new SpannerWriteIT.StackTraceContainsString("DEADLINE_EXCEEDED"));
+
+    SpannerConfig pgSpannerConfig = createPgSpannerConfig();
+    pgSpannerConfig =
+        pgSpannerConfig.withPartitionQueryTimeout(StaticValueProvider.of(Duration.millis(1)));
+
+    PCollectionView<Transaction> pgTx =
+        p.apply(
+            "Create PG tx",
+            SpannerIO.createTransaction()
+                .withSpannerConfig(pgSpannerConfig)
+                .withTimestampBound(TimestampBound.strong()));
+
+    p.apply(
+        "Read PG db",
+        SpannerIO.read()
+            .withSpannerConfig(pgSpannerConfig)
+            .withQuery("SELECT * FROM " + options.getTable())
+            .withTransaction(pgTx));
+
+    p.run().waitUntilFinish();
+  }
+
+  @Test
+  public void testReadWithTimeoutError() throws Exception {
+    thrown.expect(new SpannerWriteIT.StackTraceContainsString("SpannerException"));
+    thrown.expect(new SpannerWriteIT.StackTraceContainsString("DEADLINE_EXCEEDED"));
+
+    SpannerConfig spannerConfig = createSpannerConfig();
+    spannerConfig = spannerConfig.withPartitionReadTimeout(Duration.millis(1));
+
+    PCollectionView<Transaction> tx =
+        p.apply(
+            "Create tx",
+            SpannerIO.createTransaction()
+                .withSpannerConfig(spannerConfig)
+                .withTimestampBound(TimestampBound.strong()));
+
+    p.apply(
+        "read db",
+        SpannerIO.read()
+            .withSpannerConfig(spannerConfig)
+            .withTable(options.getTable())
+            .withColumns("Key", "Value")
+            .withTransaction(tx));
+
+    p.run().waitUntilFinish();
   }
 
   @Test

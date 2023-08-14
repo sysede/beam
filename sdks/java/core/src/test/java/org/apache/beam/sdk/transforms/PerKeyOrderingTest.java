@@ -37,7 +37,7 @@ import org.apache.beam.sdk.testing.ValidatesRunner;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TypeDescriptors;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
 import org.junit.Rule;
@@ -47,7 +47,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @SuppressWarnings(
-    "unused") // TODO(BEAM-13271): Remove when new version of errorprone is released (2.11.0)
+    "unused") // TODO(https://github.com/apache/beam/issues/21230): Remove when new version of
+// errorprone is released (2.11.0)
 @RunWith(JUnit4.class)
 public class PerKeyOrderingTest implements Serializable {
   @Rule public final transient TestPipeline pipeline = TestPipeline.create();

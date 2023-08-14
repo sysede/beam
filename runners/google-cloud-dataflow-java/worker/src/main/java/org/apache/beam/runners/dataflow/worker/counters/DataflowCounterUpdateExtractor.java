@@ -29,11 +29,11 @@ import com.google.api.services.dataflow.model.NameAndKind;
 import com.google.api.services.dataflow.model.SplitInt64;
 import org.apache.beam.runners.dataflow.worker.counters.Counter.CounterUpdateExtractor;
 import org.apache.beam.runners.dataflow.worker.counters.CounterFactory.CounterMean;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
 
 /** Factory methods for extracting {@link CounterUpdate} updates from counters. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class DataflowCounterUpdateExtractor implements CounterUpdateExtractor<CounterUpdate> {
 

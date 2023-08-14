@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.testing;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -44,12 +44,12 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.runners.TransformHierarchy;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.util.common.ReflectHelpers;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Optional;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Predicate;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Predicates;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Strings;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.FluentIterable;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Maps;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Optional;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Predicate;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Predicates;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Strings;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.FluentIterable;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Maps;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestRule;
@@ -102,7 +102,7 @@ import org.junit.runners.model.Statement;
  * documentation section.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class TestPipeline extends Pipeline implements TestRule {
 
@@ -347,29 +347,28 @@ public class TestPipeline extends Pipeline implements TestRule {
     try {
       @Nullable
       String beamTestPipelineOptions = System.getProperty(PROPERTY_BEAM_TEST_PIPELINE_OPTIONS);
-      PipelineOptions options;
-      if (Strings.isNullOrEmpty(beamTestPipelineOptions)) {
-        options = PipelineOptionsFactory.create();
-      } else {
-        List<String> args = MAPPER.readValue(beamTestPipelineOptions, List.class);
-        args.addAll(additionalArgs);
-        String[] newArgs = new String[args.size()];
-        newArgs = args.toArray(newArgs);
-        options = PipelineOptionsFactory.fromArgs(newArgs).as(TestPipelineOptions.class);
+      List<String> args = new ArrayList<>();
+      if (!Strings.isNullOrEmpty(beamTestPipelineOptions)) {
+        args.addAll(MAPPER.readValue(beamTestPipelineOptions, List.class));
       }
+      args.addAll(additionalArgs);
+      String[] newArgs = new String[args.size()];
+      newArgs = args.toArray(newArgs);
+      PipelineOptions newOptions =
+          PipelineOptionsFactory.fromArgs(newArgs).as(TestPipelineOptions.class);
 
       // If no options were specified, set some reasonable defaults
       if (Strings.isNullOrEmpty(beamTestPipelineOptions)) {
         // If there are no provided options, check to see if a dummy runner should be used.
         String useDefaultDummy = System.getProperty(PROPERTY_USE_DEFAULT_DUMMY_RUNNER);
         if (!Strings.isNullOrEmpty(useDefaultDummy) && Boolean.valueOf(useDefaultDummy)) {
-          options.setRunner(CrashingRunner.class);
+          newOptions.setRunner(CrashingRunner.class);
         }
       }
-      options.setStableUniqueNames(CheckEnabled.ERROR);
+      newOptions.setStableUniqueNames(CheckEnabled.ERROR);
 
       FileSystems.setDefaultPipelineOptions(options);
-      return run(options);
+      return run(newOptions);
     } catch (IOException e) {
       throw new RuntimeException(
           "Unable to instantiate test options from system property "

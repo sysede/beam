@@ -17,7 +17,7 @@
  */
 package org.apache.beam.runners.dataflow.util;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
 import org.apache.beam.runners.core.construction.SdkComponents;
@@ -25,7 +25,7 @@ import org.apache.beam.sdk.coders.SerializableCoder;
 
 /** A {@link CloudObjectTranslator} for {@link SerializableCoder}. */
 @SuppressWarnings({
-  "rawtypes" // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes" // TODO(https://github.com/apache/beam/issues/20447)
 })
 class SerializableCoderCloudObjectTranslator implements CloudObjectTranslator<SerializableCoder> {
   private static final String TYPE_FIELD = "type";
@@ -42,7 +42,8 @@ class SerializableCoderCloudObjectTranslator implements CloudObjectTranslator<Se
     String className = Structs.getString(cloudObject, TYPE_FIELD);
     try {
       Class<? extends Serializable> targetClass =
-          (Class<? extends Serializable>) Class.forName(className);
+          (Class<? extends Serializable>)
+              Class.forName(className, false, Thread.currentThread().getContextClassLoader());
       checkArgument(
           Serializable.class.isAssignableFrom(targetClass),
           "Target class %s does not extend %s",

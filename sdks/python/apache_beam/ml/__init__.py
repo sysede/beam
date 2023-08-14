@@ -14,3 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+"""Contains packages for supported machine learning transforms."""
+
+from apache_beam.ml.transforms.base import MLTransform

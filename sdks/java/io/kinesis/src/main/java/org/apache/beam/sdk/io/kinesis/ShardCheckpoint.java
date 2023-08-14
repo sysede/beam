@@ -20,8 +20,8 @@ package org.apache.beam.sdk.io.kinesis;
 import static com.amazonaws.services.kinesis.model.ShardIteratorType.AFTER_SEQUENCE_NUMBER;
 import static com.amazonaws.services.kinesis.model.ShardIteratorType.AT_SEQUENCE_NUMBER;
 import static com.amazonaws.services.kinesis.model.ShardIteratorType.AT_TIMESTAMP;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
 
 import com.amazonaws.services.kinesis.clientlibrary.types.ExtendedSequenceNumber;
 import com.amazonaws.services.kinesis.model.Record;
@@ -43,7 +43,7 @@ import org.joda.time.Instant;
  * This class is immutable.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 class ShardCheckpoint implements Serializable {
 
@@ -108,7 +108,7 @@ class ShardCheckpoint implements Serializable {
   }
 
   /**
-   * Used to compare {@link ShardCheckpoint} object to {@link KinesisRecord}. Depending on the the
+   * Used to compare {@link ShardCheckpoint} object to {@link KinesisRecord}. Depending on the
    * underlying shardIteratorType, it will either compare the timestamp or the {@link
    * ExtendedSequenceNumber}.
    *

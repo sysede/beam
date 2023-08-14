@@ -54,8 +54,8 @@ import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.sdk.values.WindowingStrategy;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 
@@ -225,7 +225,7 @@ public class SplittableParDoViaKeyedWorkItems {
    * {@link ProcessFn} sets timers, and timers are namespaced to a single window and it should be
    * the window of the input element.
    *
-   * <p>See also: https://issues.apache.org/jira/browse/BEAM-1983
+   * <p>See also: https://github.com/apache/beam/issues/18366
    */
   @VisibleForTesting
   public static class ProcessFn<InputT, OutputT, RestrictionT, PositionT, WatermarkEstimatorStateT>

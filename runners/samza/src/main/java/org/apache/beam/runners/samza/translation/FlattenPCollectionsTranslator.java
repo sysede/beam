@@ -17,7 +17,7 @@
  */
 package org.apache.beam.runners.samza.translation;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,7 +33,7 @@ import org.apache.beam.sdk.runners.TransformHierarchy;
 import org.apache.beam.sdk.transforms.Flatten;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
 import org.apache.samza.operators.MessageStream;
 
 /**
@@ -61,7 +61,8 @@ class FlattenPCollectionsTranslator<T> implements TransformTranslator<Flatten.PC
       // for some of the validateRunner tests only
       final MessageStream<OpMessage<T>> noOpStream =
           ctx.getDummyStream()
-              .flatMapAsync(OpAdapter.adapt((Op<String, T, Void>) (inputElement, emitter) -> {}));
+              .flatMapAsync(
+                  OpAdapter.adapt((Op<String, T, Void>) (inputElement, emitter) -> {}, ctx));
       ctx.registerMessageStream(output, noOpStream);
       return;
     }

@@ -17,7 +17,7 @@
  */
 package org.apache.beam.fn.harness.control;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import com.google.auto.value.AutoValue;
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ import org.joda.time.Instant;
  * Finalize Bundles</a> for further details.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public class FinalizeBundleHandler {
 

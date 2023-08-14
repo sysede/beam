@@ -36,7 +36,7 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
 import org.apache.beam.sdk.util.ReleaseInfo;
 import org.apache.beam.sdk.util.common.ReflectHelpers;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.MoreObjects;
 import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -284,7 +284,7 @@ public interface PipelineOptions extends HasDisplayData {
 
   @Description(
       "Name of the pipeline execution."
-          + "It must match the regular expression '[a-z]([-a-z0-9]{0,38}[a-z0-9])?'."
+          + "It must match the regular expression '[a-z]([-a-z0-9]{0,1022}[a-z0-9])?'."
           + "It defaults to ApplicationName-UserName-Date-RandomInteger")
   @Default.InstanceFactory(JobNameFactory.class)
   String getJobName();
@@ -356,6 +356,12 @@ public interface PipelineOptions extends HasDisplayData {
    * keyed by the property name. The value is a map containing type and default information.
    */
   Map<String, Map<String, Object>> outputRuntimeOptions();
+
+  /**
+   * A monotonically increasing revision number of this {@link PipelineOptions} object that can be
+   * used to detect changes.
+   */
+  int revision();
 
   /**
    * Provides a process wide unique ID for this {@link PipelineOptions} object, assigned at graph

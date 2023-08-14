@@ -17,7 +17,7 @@
  */
 package org.apache.beam.runners.spark.io;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import org.apache.beam.runners.core.construction.SerializablePipelineOptions;
 import org.apache.beam.runners.spark.SparkPipelineOptions;
@@ -51,7 +51,7 @@ import scala.Tuple2;
  * RateController} mechanism.
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 class SourceDStream<T, CheckpointMarkT extends UnboundedSource.CheckpointMark>
     extends InputDStream<Tuple2<Source<T>, CheckpointMarkT>> {
@@ -183,7 +183,7 @@ class SourceDStream<T, CheckpointMarkT extends UnboundedSource.CheckpointMark>
         proportionalDuration.isLongerThan(lowerBoundDuration)
             ? proportionalDuration
             : lowerBoundDuration;
-    LOG.info("Read duration set to: " + readDuration);
+    LOG.info("Read duration set to: {}", readDuration);
     return readDuration;
   }
 

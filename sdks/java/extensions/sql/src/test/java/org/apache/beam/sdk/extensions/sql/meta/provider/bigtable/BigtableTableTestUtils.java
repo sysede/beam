@@ -38,8 +38,8 @@ import com.google.bigtable.v2.Family;
 import java.util.List;
 import org.apache.beam.sdk.schemas.Schema;
 import org.apache.beam.sdk.values.Row;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.Longs;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.primitives.Longs;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 class BigtableTableTestUtils {
@@ -177,6 +177,25 @@ class BigtableTableTestUtils {
         .setKey(byteStringUtf8("key"))
         .addFamilies(family)
         .build();
+  }
+
+  static com.google.bigtable.v2.Row[] bigTableSegmentedRows() {
+    com.google.bigtable.v2.Row[] rows = new com.google.bigtable.v2.Row[5];
+    List<Column> columns =
+        ImmutableList.of(
+            column("boolColumn", booleanToByteArray(true)),
+            column("doubleColumn", doubleToByteArray(5.5)),
+            column("longColumn", Longs.toByteArray(10L)),
+            column("stringColumn", "stringValue".getBytes(UTF_8)));
+    Family family = Family.newBuilder().setName("familyTest").addAllColumns(columns).build();
+    for (int i = 0; i < 5; i++) {
+      rows[i] =
+          com.google.bigtable.v2.Row.newBuilder()
+              .setKey(byteStringUtf8("key" + i))
+              .addFamilies(family)
+              .build();
+    }
+    return rows;
   }
 
   // There is no possibility to insert a value with fixed timestamp so we have to replace it

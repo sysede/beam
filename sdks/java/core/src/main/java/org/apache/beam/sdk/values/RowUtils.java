@@ -32,15 +32,15 @@ import org.apache.beam.sdk.schemas.FieldAccessDescriptor.FieldDescriptor.Qualifi
 import org.apache.beam.sdk.schemas.Schema;
 import org.apache.beam.sdk.schemas.Schema.FieldType;
 import org.apache.beam.sdk.schemas.Schema.LogicalType;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Maps;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Maps;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Instant;
 import org.joda.time.base.AbstractInstant;
 
 @SuppressWarnings({
-  "nullness", // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness", // TODO(https://github.com/apache/beam/issues/20497)
   "rawtypes"
 })
 class RowUtils {
@@ -173,7 +173,11 @@ class RowUtils {
           processedValue = cases.processByte(rowPosition, (Byte) value, this);
           break;
         case BYTES:
-          processedValue = cases.processBytes(rowPosition, (byte[]) value, this);
+          processedValue =
+              cases.processBytes(
+                  rowPosition,
+                  (byte[]) ((value instanceof ByteBuffer) ? ((ByteBuffer) value).array() : value),
+                  this);
           break;
         case INT16:
           processedValue = cases.processInt16(rowPosition, (Short) value, this);

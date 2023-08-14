@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.databind.util.LRUMap;
@@ -88,11 +89,11 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.WindowingStrategy;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Function;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.FluentIterable;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Function;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.FluentIterable;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.runtime.checkpoint.OperatorSubtaskState;
@@ -116,7 +117,9 @@ import org.powermock.reflect.Whitebox;
 @RunWith(JUnit4.class)
 @SuppressWarnings({
   "keyfor",
-  "unused" // TODO(BEAM-13271): Remove when new version of errorprone is released (2.11.0)
+  // TODO(https://github.com/apache/beam/issues/21230): Remove when new version of
+  // errorprone is released (2.11.0)
+  "unused"
 })
 public class DoFnOperatorTest {
 
@@ -305,7 +308,10 @@ public class DoFnOperatorTest {
             eventTimerWithOutputTimestamp
                 .withOutputTimestamp(timerOutputTimestamp)
                 .set(timerTimestamp);
-            processingTimer.offset(Duration.millis(timerTimestamp.getMillis())).setRelative();
+            processingTimer
+                .withOutputTimestamp(new Instant(10))
+                .offset(Duration.millis(timerTimestamp.getMillis()))
+                .setRelative();
           }
 
           @OnTimer(eventTimerId)
@@ -326,12 +332,10 @@ public class DoFnOperatorTest {
 
           @OnTimer(processingTimerId)
           public void onProcessingTime(OnTimerContext context) {
-            assertEquals(
-                // Timestamps in processing timer context are defined to be the input watermark
-                // See SimpleDoFnRunner#onTimer
-                "Timer timestamp must match current input watermark",
-                timerTimestamp.plus(Duration.millis(1)),
-                context.timestamp());
+            assertTrue(
+                // Timestamps in processing timer context are defined to be the output watermark
+                "Timer timestamp must be at most current input watermark",
+                !timerTimestamp.plus(Duration.millis(1)).isBefore(context.timestamp()));
             context.outputWithTimestamp(processingTimeMessage, context.timestamp());
           }
         };
@@ -383,7 +387,7 @@ public class DoFnOperatorTest {
 
     testHarness.open();
 
-    testHarness.processWatermark(0);
+    testHarness.processWatermark(499);
     testHarness.setProcessingTime(0);
 
     IntervalWindow window1 = new IntervalWindow(new Instant(0), Duration.millis(10_000));
@@ -399,6 +403,11 @@ public class DoFnOperatorTest {
     testHarness.setProcessingTime(timerTimestamp.getMillis());
 
     assertThat(stripStreamRecordFromWindowedValue(testHarness.getOutput()), emptyIterable());
+    assertThat(doFnOperator.keyedStateInternals.minWatermarkHoldMs(), is(10L));
+
+    // this must fire the processing timer
+    testHarness.setProcessingTime(timerTimestamp.getMillis() + 1);
+
     assertThat(
         doFnOperator.keyedStateInternals.minWatermarkHoldMs(),
         is(timerOutputTimestamp.getMillis()));
@@ -415,23 +424,8 @@ public class DoFnOperatorTest {
                 eventTimeMessage + eventTimerId2,
                 timerTimestamp.minus(Duration.millis(1)),
                 window1,
-                PaneInfo.NO_FIRING)));
-
-    testHarness.getOutput().clear();
-
-    // this must fire the processing timer
-    testHarness.setProcessingTime(timerTimestamp.getMillis() + 1);
-
-    assertThat(
-        stripStreamRecordFromWindowedValue(testHarness.getOutput()),
-        contains(
-            WindowedValue.of(
-                // Timestamps in processing timer context are defined to be the input watermark
-                // See SimpleDoFnRunner#onTimer
-                processingTimeMessage,
-                timerTimestamp.plus(Duration.millis(1)),
-                window1,
-                PaneInfo.NO_FIRING)));
+                PaneInfo.NO_FIRING),
+            WindowedValue.of(processingTimeMessage, new Instant(10), window1, PaneInfo.NO_FIRING)));
 
     testHarness.close();
   }
@@ -793,6 +787,11 @@ public class DoFnOperatorTest {
     testHarness.processWatermark(51);
     assertThat(testHarness.numEventTimeTimers(), is(0));
     assertThat(testHarness.numKeyedStateEntries(), is(2));
+
+    // enforce closing of bundle
+    testHarness.setProcessingTime(
+        testHarness.getProcessingTime()
+            + 2 * FlinkPipelineOptions.defaults().getMaxBundleTimeMills());
 
     // Should not trigger garbage collection yet
     testHarness.processWatermark(
@@ -2097,7 +2096,10 @@ public class DoFnOperatorTest {
     testHarness.processElement(
         new StreamRecord<>(WindowedValue.valueInGlobalWindow(KV.of("key2", "d"))));
 
-    assertThat(Iterables.size(testHarness.getOutput()), is(0));
+    assertThat(
+        testHarness.getOutput() + " should be empty",
+        Iterables.size(testHarness.getOutput()),
+        is(0));
 
     OperatorSubtaskState backup = testHarness.snapshot(0, 0);
     doFnOperator.notifyCheckpointComplete(0L);

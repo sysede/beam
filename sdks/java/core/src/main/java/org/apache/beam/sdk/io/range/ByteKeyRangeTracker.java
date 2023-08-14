@@ -17,8 +17,8 @@
  */
 package org.apache.beam.sdk.io.range;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects.toStringHelper;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.MoreObjects.toStringHelper;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * @see ByteKeyRange
  */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public final class ByteKeyRangeTracker implements RangeTracker<ByteKey> {
   private static final Logger LOG = LoggerFactory.getLogger(ByteKeyRangeTracker.class);

@@ -44,7 +44,7 @@ import org.apache.beam.sdk.transforms.Sum;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.Row;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.tools.Frameworks;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.codehaus.commons.compiler.CompileException;
 import org.joda.time.Duration;
@@ -259,7 +259,8 @@ public class ZetaSqlJavaUdfTest extends ZetaSqlTestBase {
             jarPath);
     ZetaSQLQueryPlanner zetaSQLQueryPlanner = new ZetaSQLQueryPlanner(config);
     BeamRelNode beamRelNode = zetaSQLQueryPlanner.convertToBeamRel(sql);
-    // TODO(BEAM-11171) This should fail earlier, before compiling the CalcFn.
+    // TODO(https://github.com/apache/beam/issues/20614) This should fail earlier, before compiling
+    // the CalcFn.
     thrown.expect(UnsupportedOperationException.class);
     thrown.expectMessage("Could not compile CalcFn");
     thrown.expectCause(
@@ -283,7 +284,8 @@ public class ZetaSqlJavaUdfTest extends ZetaSqlTestBase {
             jarPath);
     ZetaSQLQueryPlanner zetaSQLQueryPlanner = new ZetaSQLQueryPlanner(config);
     BeamRelNode beamRelNode = zetaSQLQueryPlanner.convertToBeamRel(sql);
-    // TODO(BEAM-11171) This should fail earlier, before compiling the CalcFn.
+    // TODO(https://github.com/apache/beam/issues/20614) This should fail earlier, before compiling
+    // the CalcFn.
     thrown.expect(UnsupportedOperationException.class);
     thrown.expectMessage("Could not compile CalcFn");
     thrown.expectCause(

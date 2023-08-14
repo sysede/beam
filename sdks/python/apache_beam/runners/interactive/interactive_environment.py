@@ -284,7 +284,7 @@ class InteractiveEnvironment(object):
       # we don't need to clean it up here.
       if cache_manager and pipeline_id not in self._recording_managers:
         cache_manager.cleanup()
-    self.clusters.cleanup()
+    self.clusters.cleanup(force=True)
 
   def cleanup(self, pipeline=None):
     """Cleans up cached states for the given pipeline. Noop if the given
@@ -374,12 +374,11 @@ class InteractiveEnvironment(object):
     given pipeline. If the pipeline is absent from the environment while
     create_if_absent is True, creates and returns a new file based cache
     manager for the pipeline."""
-    if self._is_in_ipython:
-      warnings.filterwarnings(
-          'ignore',
-          'options is deprecated since First stable release. References to '
-          '<pipeline>.options will not be supported',
-          category=DeprecationWarning)
+    warnings.filterwarnings(
+        'ignore',
+        'options is deprecated since First stable release. References to '
+        '<pipeline>.options will not be supported',
+        category=DeprecationWarning)
 
     cache_manager = self._cache_managers.get(str(id(pipeline)), None)
     pipeline_runner = detect_pipeline_runner(pipeline)
@@ -672,8 +671,8 @@ class InteractiveEnvironment(object):
        all jQuery plugins are set.
     """
     try:
-      from IPython.core.display import Javascript
-      from IPython.core.display import display_javascript
+      from IPython.display import Javascript
+      from IPython.display import display_javascript
       display_javascript(
           Javascript(
               _JQUERY_WITH_DATATABLE_TEMPLATE.format(customized_script='')))
@@ -694,8 +693,8 @@ class InteractiveEnvironment(object):
     especially the output areas of notebook cells.
     """
     try:
-      from IPython.core.display import Javascript
-      from IPython.core.display import display_javascript
+      from IPython.display import Javascript
+      from IPython.display import display_javascript
       display_javascript(
           Javascript(_HTML_IMPORT_TEMPLATE.format(hrefs=html_hrefs)))
     except ImportError:
@@ -718,7 +717,11 @@ class InteractiveEnvironment(object):
   def _get_gcs_cache_dir(self, pipeline, cache_dir):
     cache_dir_path = PurePath(cache_dir)
     if len(cache_dir_path.parts) < 2:
-      _LOGGER.error('GCS bucket cache path is too short to be valid.')
+      _LOGGER.error(
+          'GCS bucket cache path "%s" is too short to be valid. See '
+          'https://cloud.google.com/storage/docs/naming-buckets for '
+          'the expected format.',
+          cache_dir)
       raise ValueError('cache_root GCS bucket path is invalid.')
     bucket_name = cache_dir_path.parts[1]
     assert_bucket_exists(bucket_name)

@@ -99,11 +99,11 @@ import org.apache.beam.sdk.util.WindowedValue;
 import org.apache.beam.sdk.util.WindowedValue.FullWindowedValueCoder;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.WindowingStrategy;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.graph.MutableNetwork;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.graph.Network;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSet;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.graph.MutableNetwork;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.graph.Network;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.Before;
 import org.junit.Test;
@@ -116,7 +116,8 @@ import org.mockito.MockitoAnnotations;
 /** Tests for {@link IntrinsicMapTaskExecutorFactory}. */
 @RunWith(JUnit4.class)
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
+  "DoNotMock", // TODO: Use NetworkBuilder to create a real instance
 })
 public class IntrinsicMapTaskExecutorFactoryTest {
   private static final String STAGE = "test";
@@ -179,10 +180,6 @@ public class IntrinsicMapTaskExecutorFactoryTest {
 
     try (DataflowMapTaskExecutor executor =
         mapTaskExecutorFactory.create(
-            null /* beamFnControlClientHandler */,
-            null /* GrpcFnServer<GrpcDataService> */,
-            null /* ApiServiceDescriptor */,
-            null, /* GrpcFnServer<GrpcStateService> */
             mapTaskToNetwork.apply(mapTask),
             options,
             STAGE,
@@ -193,7 +190,7 @@ public class IntrinsicMapTaskExecutorFactoryTest {
             idGenerator)) {
       // Safe covariant cast not expressible without rawtypes.
       @SuppressWarnings({
-        "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+        "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
         "unchecked"
       })
       List<Object> operations = (List) executor.operations;
@@ -273,10 +270,6 @@ public class IntrinsicMapTaskExecutorFactoryTest {
 
     try (DataflowMapTaskExecutor executor =
         mapTaskExecutorFactory.create(
-            null /* beamFnControlClientHandler */,
-            null /* beamFnDataService */,
-            null /* beamFnStateService */,
-            null,
             mapTaskToNetwork.apply(mapTask),
             options,
             STAGE,

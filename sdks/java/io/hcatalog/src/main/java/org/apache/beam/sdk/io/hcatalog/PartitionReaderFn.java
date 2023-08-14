@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.io.hcatalog;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +39,7 @@ import org.apache.hive.hcatalog.data.transfer.ReaderContext;
 
 /** Reads partition at a given index. */
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 class PartitionReaderFn extends DoFn<KV<Read, Integer>, HCatRecord> {
   private transient IMetaStoreClient metaStoreClient;

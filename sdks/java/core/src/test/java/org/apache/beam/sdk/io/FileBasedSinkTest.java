@@ -18,7 +18,7 @@
 package org.apache.beam.sdk.io;
 
 import static org.apache.beam.sdk.io.WriteFiles.UNKNOWN_SHARDNUM;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets.UTF_8;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Charsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -60,8 +60,8 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.windowing.GlobalWindow;
 import org.apache.beam.sdk.transforms.windowing.PaneInfo;
 import org.apache.beam.sdk.values.KV;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.deflate.DeflateCompressorInputStream;
 import org.apache.commons.lang3.SystemUtils;
@@ -74,7 +74,7 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link FileBasedSink}. */
 @RunWith(JUnit4.class)
 @SuppressWarnings({
-  "rawtypes", // TODO(https://issues.apache.org/jira/browse/BEAM-10556)
+  "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
 })
 public class FileBasedSinkTest {
   @Rule public TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -172,7 +172,7 @@ public class FileBasedSinkTest {
   /** Finalize copies temporary files to output files and removes any temporary files. */
   @Test
   public void testFinalize() throws Exception {
-    // TODO: Java core test failing on windows, https://issues.apache.org/jira/browse/BEAM-10743
+    // TODO: Java core test failing on windows, https://github.com/apache/beam/issues/20471
     assumeFalse(SystemUtils.IS_OS_WINDOWS);
     List<File> files = generateTemporaryFilesForFinalize(3);
     runFinalize(buildWriteOperation(), files);
@@ -181,7 +181,7 @@ public class FileBasedSinkTest {
   /** Finalize can be called repeatedly. */
   @Test
   public void testFinalizeMultipleCalls() throws Exception {
-    // TODO: Java core test failing on windows, https://issues.apache.org/jira/browse/BEAM-10744
+    // TODO: Java core test failing on windows, https://github.com/apache/beam/issues/20482
     assumeFalse(SystemUtils.IS_OS_WINDOWS);
     List<File> files = generateTemporaryFilesForFinalize(3);
     SimpleSink.SimpleWriteOperation writeOp = buildWriteOperation();
@@ -192,7 +192,7 @@ public class FileBasedSinkTest {
   /** Finalize can be called when some temporary files do not exist and output files exist. */
   @Test
   public void testFinalizeWithIntermediateState() throws Exception {
-    // TODO: Java core test failing on windows, https://issues.apache.org/jira/browse/BEAM-10745
+    // TODO: Java core test failing on windows, https://github.com/apache/beam/issues/20479
     assumeFalse(SystemUtils.IS_OS_WINDOWS);
     SimpleSink.SimpleWriteOperation writeOp = buildWriteOperation();
     List<File> files = generateTemporaryFilesForFinalize(3);

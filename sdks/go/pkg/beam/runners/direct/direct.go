@@ -15,6 +15,9 @@
 
 // Package direct contains the direct runner for running single-bundle
 // pipelines in the current process. Useful for testing.
+//
+// Deprecated: Use prism as a local runner instead.
+// Reliance on the direct runner leads to non-portable pipelines.
 package direct
 
 import (
@@ -332,6 +335,9 @@ func (b *builder) makeLink(id linkID) (exec.Node, error) {
 
 	case graph.WindowInto:
 		u = &exec.WindowInto{UID: b.idgen.New(), Fn: edge.WindowFn, Out: out[0]}
+
+	case graph.External:
+		return nil, errors.Errorf("external transforms like %v are not supported in the Go direct runner, please execute your pipeline on a different runner", edge)
 
 	default:
 		return nil, errors.Errorf("unexpected edge: %v", edge)

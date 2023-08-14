@@ -21,16 +21,19 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/core/graph/window"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/core/graph/window/trigger"
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/testing/passert"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/testing/teststream"
 )
 
 func init() {
-	beam.RegisterFunction(PanesFn)
+	register.Function3x0(panesFn)
+
+	register.Emitter1[int]()
 }
 
-// PanesFn is DoFn that simply emits the pane timing value.
-func PanesFn(pn beam.PaneInfo, value float64, emit func(int)) {
+// panesFn is DoFn that simply emits the pane timing value.
+func panesFn(pn beam.PaneInfo, value float64, emit func(int)) {
 	emit(int(pn.Timing))
 }
 
@@ -46,7 +49,7 @@ func Panes(s beam.Scope) {
 	windowed := beam.WindowInto(s, window.NewFixedWindows(windowSize), col, []beam.WindowIntoOption{
 		beam.Trigger(trigger.Always()),
 	}...)
-	sums := beam.ParDo(s, PanesFn, windowed)
+	sums := beam.ParDo(s, panesFn, windowed)
 	sums = beam.WindowInto(s, window.NewGlobalWindows(), sums)
 	passert.Count(s, sums, "number of firings", 3)
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/io/textio"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/log"
+	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/x/beamx"
 )
 
@@ -35,12 +36,15 @@ var (
 )
 
 func init() {
-	beam.RegisterFunction(multiFn)
-	beam.RegisterFunction(extractFn)
-	beam.RegisterFunction(subsetFn)
+	register.Function4x1(multiFn)
+	register.Function3x1(subsetFn)
+	register.Function2x0(extractFn)
+
+	register.Emitter1[string]()
+	register.Iter1[string]()
 }
 
-// stitch constructs two composite PTranformations that provide input to each other. It
+// stitch constructs two composite PTransforms that provide input to each other. It
 // is a (deliberately) complex DAG to show what kind of structures are possible.
 func stitch(s beam.Scope, words beam.PCollection) (beam.PCollection, beam.PCollection) {
 	ping := s.Scope("ping")

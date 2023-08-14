@@ -20,8 +20,8 @@ package org.apache.beam.sdk.extensions.sql.meta.provider.bigtable;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.beam.sdk.io.gcp.bigtable.RowUtils.COLUMNS_MAPPING;
 import static org.apache.beam.sdk.io.gcp.bigtable.RowUtils.KEY;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Maps.newHashMap;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets.newHashSet;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Maps.newHashMap;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets.newHashSet;
 
 import com.alibaba.fastjson.JSONObject;
 import java.io.Serializable;
@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.extensions.sql.meta.BeamSqlTableFilter;
 import org.apache.beam.sdk.extensions.sql.meta.SchemaBaseBeamTable;
 import org.apache.beam.sdk.extensions.sql.meta.Table;
@@ -48,9 +47,8 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.POutput;
 import org.apache.beam.sdk.values.Row;
 import org.apache.beam.vendor.calcite.v1_28_0.org.apache.calcite.rex.RexNode;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Splitter;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Splitter;
 
-@Experimental
 public class BigtableTable extends SchemaBaseBeamTable implements Serializable {
   // Should match:
   // googleapis.com/bigtable/projects/projectId/instances/instanceId/tables/tableId"

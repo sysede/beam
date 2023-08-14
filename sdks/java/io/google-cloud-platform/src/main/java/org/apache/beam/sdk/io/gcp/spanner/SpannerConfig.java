@@ -17,7 +17,7 @@
  */
 package org.apache.beam.sdk.io.gcp.spanner;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.StatusCode.Code;
@@ -29,15 +29,15 @@ import com.google.cloud.spanner.SpannerOptions;
 import java.io.Serializable;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.display.DisplayData;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSet;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Duration;
 
 /** Configuration for a Cloud Spanner client. */
 @AutoValue
 @SuppressWarnings({
-  "nullness" // TODO(https://issues.apache.org/jira/browse/BEAM-10402)
+  "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
 public abstract class SpannerConfig implements Serializable {
   // A default host name for batch traffic.
@@ -47,7 +47,7 @@ public abstract class SpannerConfig implements Serializable {
   // Total allowable backoff time.
   private static final Duration DEFAULT_MAX_CUMULATIVE_BACKOFF = Duration.standardMinutes(15);
   // A default priority for batch traffic.
-  private static final RpcPriority DEFAULT_RPC_PRIORITY = RpcPriority.MEDIUM;
+  static final RpcPriority DEFAULT_RPC_PRIORITY = RpcPriority.MEDIUM;
 
   public abstract @Nullable ValueProvider<String> getProjectId();
 
@@ -73,8 +73,16 @@ public abstract class SpannerConfig implements Serializable {
 
   public abstract @Nullable ValueProvider<RpcPriority> getRpcPriority();
 
+  public abstract @Nullable ValueProvider<String> getDatabaseRole();
+
+  public abstract @Nullable ValueProvider<Duration> getPartitionQueryTimeout();
+
+  public abstract @Nullable ValueProvider<Duration> getPartitionReadTimeout();
+
   @VisibleForTesting
   abstract @Nullable ServiceFactory<Spanner, SpannerOptions> getServiceFactory();
+
+  public abstract @Nullable ValueProvider<Boolean> getDataBoostEnabled();
 
   abstract Builder toBuilder();
 
@@ -145,6 +153,14 @@ public abstract class SpannerConfig implements Serializable {
 
     abstract Builder setRpcPriority(ValueProvider<RpcPriority> rpcPriority);
 
+    abstract Builder setDatabaseRole(ValueProvider<String> databaseRole);
+
+    abstract Builder setDataBoostEnabled(ValueProvider<Boolean> dataBoostEnabled);
+
+    abstract Builder setPartitionQueryTimeout(ValueProvider<Duration> partitionQueryTimeout);
+
+    abstract Builder setPartitionReadTimeout(ValueProvider<Duration> partitionReadTimeout);
+
     public abstract SpannerConfig build();
   }
 
@@ -160,6 +176,7 @@ public abstract class SpannerConfig implements Serializable {
 
   /** Specifies the Cloud Spanner instance ID. */
   public SpannerConfig withInstanceId(ValueProvider<String> instanceId) {
+    checkNotNull(instanceId, "withInstanceId(instanceId) called with null input.");
     return toBuilder().setInstanceId(instanceId).build();
   }
 
@@ -170,6 +187,7 @@ public abstract class SpannerConfig implements Serializable {
 
   /** Specifies the Cloud Spanner database ID. */
   public SpannerConfig withDatabaseId(ValueProvider<String> databaseId) {
+    checkNotNull(databaseId, "withDatabaseId(databaseId) called with null input.");
     return toBuilder().setDatabaseId(databaseId).build();
   }
 
@@ -180,6 +198,7 @@ public abstract class SpannerConfig implements Serializable {
 
   /** Specifies the Cloud Spanner host. */
   public SpannerConfig withHost(ValueProvider<String> host) {
+    checkNotNull(host, "withHost(host) called with null input.");
     return toBuilder().setHost(host).build();
   }
 
@@ -250,6 +269,37 @@ public abstract class SpannerConfig implements Serializable {
 
   /** Specifies the RPC priority. */
   public SpannerConfig withRpcPriority(ValueProvider<RpcPriority> rpcPriority) {
+    checkNotNull(rpcPriority, "withRpcPriority(rpcPriority) called with null input.");
     return toBuilder().setRpcPriority(rpcPriority).build();
+  }
+
+  /** Specifies the Cloud Spanner database role. */
+  public SpannerConfig withDatabaseRole(ValueProvider<String> databaseRole) {
+    return toBuilder().setDatabaseRole(databaseRole).build();
+  }
+
+  /** Specifies if the pipeline has to be run on the independent compute resource. */
+  public SpannerConfig withDataBoostEnabled(ValueProvider<Boolean> dataBoostEnabled) {
+    return toBuilder().setDataBoostEnabled(dataBoostEnabled).build();
+  }
+
+  /** Specifies the PartitionQuery timeout. */
+  public SpannerConfig withPartitionQueryTimeout(Duration partitionQueryTimeout) {
+    return withPartitionQueryTimeout(ValueProvider.StaticValueProvider.of(partitionQueryTimeout));
+  }
+
+  /** Specifies the PartitionQuery timeout. */
+  public SpannerConfig withPartitionQueryTimeout(ValueProvider<Duration> partitionQueryTimeout) {
+    return toBuilder().setPartitionQueryTimeout(partitionQueryTimeout).build();
+  }
+
+  /** Specifies the PartitionRead timeout. */
+  public SpannerConfig withPartitionReadTimeout(Duration partitionReadTimeout) {
+    return withPartitionReadTimeout(ValueProvider.StaticValueProvider.of(partitionReadTimeout));
+  }
+
+  /** Specifies the PartitionRead timeout. */
+  public SpannerConfig withPartitionReadTimeout(ValueProvider<Duration> partitionReadTimeout) {
+    return toBuilder().setPartitionReadTimeout(partitionReadTimeout).build();
   }
 }
